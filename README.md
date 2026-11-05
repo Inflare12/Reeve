@@ -31,7 +31,7 @@ Implemented foundations:
 - Live five-channel telemetry plots for altitude, velocity, acceleration, dynamic pressure and mass, driven by recorded simulation samples.
 - Basic analytical checks and model documentation.
 
-Not yet implemented: full coupled 6-DOF aerodynamics and stability derivatives, validated thermal/structural analysis, component-specific geometry editing and workshop-to-flight handoff, advanced weather, or a professional telemetry plotting UI. These must not be inferred from the current scaffold.
+Not yet implemented: fully coupled 6-DOF aerodynamic forces and stability derivatives, validated thermal and structural analysis, pressure-vessel and buckling analysis, component-specific geometry editing and workshop-to-flight handoff, advanced weather, multi-run history comparison and advanced telemetry plotting tools. These must not be inferred from the current scaffold.
 
 ## Requirements
 
@@ -94,7 +94,7 @@ If the executable is named godot4, substitute that command. A successful parser 
 
 ## Model limitations
 
-The current flight core is a 3-DOF point-mass translational model. It does not model attitude, angular momentum, gimbaling, flexible structures, slosh, compressible CFD, or finite-element stress. Drag uses a configurable coefficient and reference area; this is an educational approximation, not a universal aerodynamic database. The atmosphere is a simplified standard profile and excludes weather variability.
+The translational flight core remains a 3-DOF point-mass model. A separate rotational foundation integrates quaternion attitude and diagonal-inertia angular dynamics from supplied body moments, but aerodynamic forces and stability derivatives are not yet fully coupled to that attitude. The model does not include gimbaling, flexible structures, slosh, compressible CFD, or finite-element stress. Drag uses a supplied or configured coefficient and reference area; this is an educational approximation, not a universal aerodynamic database. The atmosphere is a simplified dry-air profile and excludes meteorological weather variability.
 
 All values shown by the simulator must be traceable to user inputs, supplied data, or documented calculations. Unknown performance data should remain unknown rather than being fabricated.
 

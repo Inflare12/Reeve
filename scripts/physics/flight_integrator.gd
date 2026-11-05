@@ -69,7 +69,6 @@ static func step(
 			cd = 1.0
 			area = vehicle_cd_area + recovery_cd_area
 
-	state.applied_thrust_n = thrust_n
 	var old_acceleration: Vector3
 	var aerodynamic_moment_body := Vector3.ZERO
 	if model.has("aerodynamic_model"):
@@ -121,6 +120,7 @@ static func step(
 			state, thrust_n, thrust_direction, cd, area, wind_velocity_m_s, atmosphere
 		)
 
+	state.applied_thrust_n = thrust_n
 	var available_mass_above_dry: float = maxf(state.mass_kg - dry_mass_kg, 0.0)
 	var consumed: float = minf(mass_flow_kg_s * dt_s, minf(state.propellant_remaining_kg, available_mass_above_dry))
 	state.applied_mass_flow_kg_s = consumed / dt_s

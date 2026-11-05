@@ -26,6 +26,7 @@ func _initialize() -> void:
 	failures += _check_time_varying_wind()
 	failures += _check_structural_axial_estimate()
 	failures += _check_thermal_lumped_response()
+	failures += _check_analytic_free_fall()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -592,5 +593,30 @@ func _check_thermal_lumped_response() -> int:
 	)
 	if bool(invalid_biot.get("ok", true)) or float(invalid_biot.get("biot_number", 0.0)) < 0.1:
 		push_error("Thermal model failed to reject unsupported lumped-capacitance assumption")
+		return 1
+	return 0
+
+func _check_analytic_free_fall() -> int:
+	var state := ReeveFlightState.new()
+	state.position_m.y = 1000.0
+	state.mass_kg = 1.0
+	var model := {
+		"dry_mass_kg": 1.0,
+		"drag_coefficient": 0.0,
+		"reference_area_m2": 0.0
+	}
+	var dt := 1.0 / 120.0
+	for _step in range(120):
+		if not ReeveFlightIntegrator.step(state, dt, model):
+			push_error("Analytical free-fall integration rejected a valid step")
+			return 1
+	var expected_velocity: float = -ReeveConstants.STANDARD_GRAVITY
+	var expected_position: float = 1000.0 - 0.5 * ReeveConstants.STANDARD_GRAVITY
+	if absf(state.velocity_m_s.y - expected_velocity) > 0.000001:
+		push_error("Free-fall velocity diverged from analytical constant-gravity solution")
+		return 1
+	# Semi-implicit Euler has a known O(dt) position offset; bound it explicitly.
+	if absf(state.position_m.y - expected_position) > 0.05:
+		push_error("Free-fall position error exceeded the documented semi-implicit Euler tolerance")
 		return 1
 	return 0

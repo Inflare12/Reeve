@@ -16,6 +16,7 @@ var pressure_scale_input: SpinBox
 var workshop_configuration: ReeveRocketConfiguration
 
 func _ready() -> void:
+	_build_flight_environment()
 	camera.look_at(Vector3(0.0, 2.0, 0.0), Vector3.UP)
 	status_label.text = "READY — no propulsion profile loaded. No flight has been simulated."
 
@@ -111,6 +112,47 @@ func _process(delta: float) -> void:
 		status_label.text = "GROUND CONTACT — demonstration complete"
 	elif not simulation.last_error.is_empty():
 		status_label.text = "SIMULATION ERROR — %s" % simulation.last_error
+
+func _build_flight_environment() -> void:
+	var world_environment := WorldEnvironment.new()
+	world_environment.name = "FlightWorldEnvironment"
+	var environment := Environment.new()
+	environment.background_mode = Environment.BG_COLOR
+	environment.background_color = Color(0.36, 0.52, 0.69)
+	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	environment.ambient_light_color = Color(0.72, 0.78, 0.86)
+	environment.ambient_light_energy = 0.75
+	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	world_environment.environment = environment
+	add_child(world_environment)
+
+	var ground := MeshInstance3D.new()
+	ground.name = "GroundPlane"
+	var ground_mesh := PlaneMesh.new()
+	ground_mesh.size = Vector2(300.0, 300.0)
+	ground.mesh = ground_mesh
+	ground.position = Vector3(0.0, -0.15, 0.0)
+	var ground_material := StandardMaterial3D.new()
+	ground_material.albedo_color = Color(0.19, 0.25, 0.21)
+	ground_material.roughness = 0.95
+	ground.material_override = ground_material
+	add_child(ground)
+
+	var launch_pad := MeshInstance3D.new()
+	launch_pad.name = "LaunchPad"
+	var pad_mesh := CylinderMesh.new()
+	pad_mesh.top_radius = 2.0
+	pad_mesh.bottom_radius = 2.0
+	pad_mesh.height = 0.14
+	pad_mesh.radial_segments = 32
+	launch_pad.mesh = pad_mesh
+	launch_pad.position = Vector3(0.0, -0.07, 0.0)
+	var pad_material := StandardMaterial3D.new()
+	pad_material.albedo_color = Color(0.24, 0.27, 0.31)
+	pad_material.metallic = 0.35
+	pad_material.roughness = 0.7
+	launch_pad.material_override = pad_material
+	add_child(launch_pad)
 
 func _add_environment_spinbox(label_text: String, minimum: float, maximum: float, initial: float, step: float) -> SpinBox:
 	var container := VBoxContainer.new()

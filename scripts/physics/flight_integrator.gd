@@ -123,6 +123,7 @@ static func step(
 
 	var available_mass_above_dry: float = maxf(state.mass_kg - dry_mass_kg, 0.0)
 	var consumed: float = minf(mass_flow_kg_s * dt_s, minf(state.propellant_remaining_kg, available_mass_above_dry))
+	state.applied_mass_flow_kg_s = consumed / dt_s
 	state.propellant_remaining_kg -= consumed
 	state.applied_mass_flow_kg_s = consumed / dt_s
 	state.mass_kg = maxf(dry_mass_kg, state.mass_kg - consumed)

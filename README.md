@@ -26,7 +26,7 @@ Implemented foundations:
 - A translational and rotational rigid-body foundation with gravity, supplied thrust, quadratic drag, quaternion attitude, diagonal-inertia angular dynamics and body-frame thrust direction.
 - A fixed-step simulation controller with a bounded catch-up accumulator, validated model inputs and optional ground-contact event.
 - An educational recovery model with altitude-triggered supplied parachute drag, terminal descent speed estimate and explicit limitations.
-- Lightweight 3D launch environment with ground plane, launch pad, ambient lighting and shadows.
+- Lightweight 3D launch environment with ground plane, launch pad, ambient lighting and shadows; selectable external-chase, side-observation, ground-observation and rocket-follow cameras.
 - Live gravity-only drop demonstration with position, speed, acceleration, wind-relative dynamic pressure, mass and time telemetry.
 - Flight Lab controls for horizontal wind velocity, temperature offset, pressure scaling, pause/resume, exact single-step execution, bounded simulation time scaling, and CSV/JSON telemetry export.
 - Telemetry samples with CSV and unit-labelled JSON export; Mach and dynamic pressure are computed from air-relative velocity including the configured wind vector. JSON exports also include state-triggered mission events such as apogee, descent and ground contact.

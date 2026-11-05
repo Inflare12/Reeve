@@ -39,8 +39,11 @@ func sample(time_s: float) -> Dictionary:
 		return {"ok": false, "error": "Sample time must be finite and non-negative."}
 	if time_s < float(points[0].time_s):
 		return {"ok": true, "thrust_n": 0.0, "mass_flow_kg_s": 0.0}
-	if time_s >= float(points[points.size() - 1].time_s):
+	if time_s > float(points[points.size() - 1].time_s):
 		return {"ok": true, "thrust_n": 0.0, "mass_flow_kg_s": 0.0}
+	if is_equal_approx(time_s, float(points[points.size() - 1].time_s)):
+		var final_point: Dictionary = points[points.size() - 1]
+		return {"ok": true, "thrust_n": float(final_point.thrust_n), "mass_flow_kg_s": float(final_point.mass_flow_kg_s)}
 	for index in range(points.size() - 1):
 		var lower: Dictionary = points[index]
 		var upper: Dictionary = points[index + 1]

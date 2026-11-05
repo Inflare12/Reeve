@@ -38,7 +38,7 @@ static func calculate_flow_properties(
 	speed_of_sound_m_s: float,
 	characteristic_length_m: float
 ) -> Dictionary:
-	if density_kg_m3 < 0.0 or dynamic_viscosity_pa_s <= 0.0 or speed_of_sound_m_s <= 0.0 or characteristic_length_m <= 0.0:
+	if not relative_air_velocity_m_s.is_finite() or not is_finite(density_kg_m3) or not is_finite(dynamic_viscosity_pa_s) or not is_finite(speed_of_sound_m_s) or not is_finite(characteristic_length_m) or density_kg_m3 < 0.0 or dynamic_viscosity_pa_s <= 0.0 or speed_of_sound_m_s <= 0.0 or characteristic_length_m <= 0.0:
 		return {"ok": false, "error": "Density must be non-negative; viscosity, sound speed and length must be positive."}
 	var speed: float = relative_air_velocity_m_s.length()
 	return {

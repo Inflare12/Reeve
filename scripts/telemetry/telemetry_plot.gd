@@ -57,5 +57,5 @@ func _draw() -> void:
 		draw_circle(points[0], 2.5, Color(0.35, 0.82, 0.92))
 	elif points.size() > 1:
 		draw_polyline(points, Color(0.35, 0.82, 0.92), 1.6, true)
-	draw_string(font, Vector2(4.0, plot_rect.position.y + 4.0), "%.3g" % maximum, HORIZONTAL_ALIGNMENT_LEFT, 28.0, 9, Color(0.62, 0.7, 0.79))
-	draw_string(font, Vector2(4.0, plot_rect.end.y), "%.3g" % minimum, HORIZONTAL_ALIGNMENT_LEFT, 28.0, 9, Color(0.62, 0.7, 0.79))
+	draw_string(font, Vector2(4.0, plot_rect.position.y + 4.0), "%.3f" % maximum, HORIZONTAL_ALIGNMENT_LEFT, 28.0, 9, Color(0.62, 0.7, 0.79))
+	draw_string(font, Vector2(4.0, plot_rect.end.y), "%.3f" % minimum, HORIZONTAL_ALIGNMENT_LEFT, 28.0, 9, Color(0.62, 0.7, 0.79))

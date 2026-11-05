@@ -312,8 +312,9 @@ func _apply_workshop_visual(handoff: Dictionary) -> void:
 		fin.mesh = fin_mesh
 		var fin_mount := Node3D.new()
 		fin_mount.name = "WorkshopFinMount_%d" % fin_index
-		fin_mount.position = Vector3(radius_m + fin_span_m * 0.5, fin_chord_m * 0.5, 0.0)
+		fin_mount.position = Vector3.ZERO
 		fin_mount.rotation.y = TAU * float(fin_index) / float(fin_count)
+		fin.position = Vector3(radius_m + fin_span_m * 0.5, fin_chord_m * 0.5, 0.0)
 		$RocketVisual.add_child(fin_mount)
 		fin_mount.add_child(fin)
 

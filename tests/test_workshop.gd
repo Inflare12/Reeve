@@ -49,6 +49,14 @@ func _initialize() -> void:
 	if instance.configuration.components.size() != 6 or absf(updated_mass - baseline_mass - float(mass_inputs["payload"].value)) > 0.000001:
 		push_error("Payload mass roll-up failed input=%.3f count=%d base=%.3f updated=%.3f" % [float(mass_inputs["payload"].value), instance.configuration.components.size(), baseline_mass, updated_mass])
 		failures += 1
+	instance.call("_save_configuration")
+	mass_inputs["payload"].value = 0.0
+	instance.call("_load_configuration")
+	if absf(float(mass_inputs["payload"].value) - 1.3) > 0.000001:
+		push_error("Workshop save/load did not preserve the user-entered payload mass")
+		failures += 1
+	if FileAccess.file_exists("user://reeve_vehicle.json"):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path("user://reeve_vehicle.json"))
 	instance.queue_free()
 	if failures == 0:
 		print("REEVE workshop checks: PASS")

@@ -4,6 +4,8 @@ extends RefCounted
 
 var samples: Array[Dictionary] = []
 var events: Array[Dictionary] = []
+## Bounded retention keeps long runs usable on integrated-graphics/8 GB systems.
+var max_samples: int = 50000
 
 func record_event(event_name: String, state: ReeveFlightState, details: Dictionary = {}) -> void:
 	if event_name.strip_edges().is_empty() or state == null or not state.is_valid():
@@ -27,6 +29,13 @@ func record(
 	var air_speed_m_s: float = relative_air_velocity_m_s.length()
 	var horizontal_speed_m_s: float = Vector2(state.velocity_m_s.x, state.velocity_m_s.z).length()
 	var sound_speed: float = maxf(float(atmosphere.get("speed_of_sound_m_s", 0.0)), 0.001)
+	if max_samples < 2:
+		max_samples = 2
+	if samples.size() >= max_samples:
+		var decimated_samples: Array[Dictionary] = []
+		for sample_index in range(0, samples.size(), 2):
+			decimated_samples.append(samples[sample_index])
+		samples = decimated_samples
 	var mass_flow_kg_s: float = state.applied_mass_flow_kg_s
 	var specific_impulse_s: float = thrust_n / (mass_flow_kg_s * ReeveConstants.STANDARD_GRAVITY) if mass_flow_kg_s > 0.0 else 0.0
 	var effective_exhaust_velocity_m_s: float = specific_impulse_s * ReeveConstants.STANDARD_GRAVITY

@@ -4,7 +4,15 @@ extends RefCounted
 ## This is not a full US Standard Atmosphere 1976 implementation.
 
 static func sample(altitude_m: float) -> Dictionary:
-	var h: float = clampf(altitude_m, -500.0, ReeveConstants.STRATOSPHERE_UPPER_LIMIT_M)
+	if not is_finite(altitude_m):
+		return {"ok": false, "error": "Altitude must be finite."}
+	if altitude_m < -500.0 or altitude_m > ReeveConstants.STRATOSPHERE_UPPER_LIMIT_M:
+		return {
+			"ok": false,
+			"error": "Atmosphere model is only defined from -500 m to %.0f m geopotential altitude." % ReeveConstants.STRATOSPHERE_UPPER_LIMIT_M,
+			"requested_altitude_m": altitude_m
+		}
+	var h: float = altitude_m
 	var temperature_k: float
 	var pressure_pa: float
 
@@ -28,6 +36,8 @@ static func sample(altitude_m: float) -> Dictionary:
 	var speed_of_sound_m_s: float = sqrt(ReeveConstants.AIR_GAMMA * ReeveConstants.AIR_GAS_CONSTANT * temperature_k)
 
 	return {
+		"ok": true,
+		"model": "REEVE simplified dry-air ISA-like profile",
 		"altitude_m": h,
 		"temperature_k": temperature_k,
 		"pressure_pa": pressure_pa,
@@ -37,5 +47,7 @@ static func sample(altitude_m: float) -> Dictionary:
 	}
 
 static func gravity_at_altitude(altitude_m: float) -> float:
-	var radius: float = ReeveConstants.EARTH_MEAN_RADIUS_M + maxf(altitude_m, -500.0)
+	if not is_finite(altitude_m) or altitude_m <= -ReeveConstants.EARTH_MEAN_RADIUS_M:
+		return NAN
+	var radius: float = ReeveConstants.EARTH_MEAN_RADIUS_M + altitude_m
 	return ReeveConstants.STANDARD_GRAVITY * pow(ReeveConstants.EARTH_MEAN_RADIUS_M / radius, 2.0)

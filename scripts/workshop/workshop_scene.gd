@@ -109,6 +109,8 @@ func _build_interface() -> void:
 		var material := ReeveMaterialCatalog.get_material(material_id)
 		material_select.add_item(str(material.name))
 		material_select.set_item_metadata(material_select.item_count - 1, material_id)
+	if material_select.item_count > 0:
+		material_select.select(0)
 	column.add_child(material_select)
 	material_select.item_selected.connect(_on_parameters_changed)
 

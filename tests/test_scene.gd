@@ -35,6 +35,11 @@ func _initialize() -> void:
 		push_error("Scene status label is missing")
 		failures += 1
 
+	for control_name in ["PauseResumeButton", "SingleStepButton", "SlowerButton", "FasterButton", "ExportCsvButton", "ExportJsonButton"]:
+		if instance.get_node_or_null("CanvasLayer/Panel/Info/" + control_name) == null:
+			push_error("Flight Lab control is missing: %s" % control_name)
+			failures += 1
+
 	var gravity_button := instance.get_node_or_null("CanvasLayer/Panel/Info/GravityDropButton") as Button
 	if gravity_button == null:
 		push_error("Gravity-only demonstration button is missing")
@@ -46,6 +51,15 @@ func _initialize() -> void:
 		if simulation == null or simulation.state == null or simulation.state.time_s <= 0.0:
 			push_error("Gravity-only demonstration did not advance physics")
 			failures += 1
+		else:
+			var pause_button := instance.get_node("CanvasLayer/Panel/Info/PauseResumeButton") as Button
+			var step_button := instance.get_node("CanvasLayer/Panel/Info/SingleStepButton") as Button
+			pause_button.pressed.emit()
+			var before_step: float = simulation.state.time_s
+			step_button.pressed.emit()
+			if absf(simulation.state.time_s - before_step - simulation.fixed_dt_s) > 0.000001:
+				push_error("Flight Lab single-step control did not advance exactly one physics step")
+				failures += 1
 
 	instance.queue_free()
 	if failures == 0:

@@ -11,16 +11,19 @@ func _ready() -> void:
 	status_label.text = "READY — no propulsion profile loaded. No flight has been simulated."
 
 	var gravity_button := Button.new()
+	gravity_button.name = "GravityDropButton"
 	gravity_button.text = "Run Gravity-Only Drop Test"
 	gravity_button.pressed.connect(_start_gravity_drop)
 	$CanvasLayer/Panel/Info.add_child(gravity_button)
 
 	var reset_button := Button.new()
+	reset_button.name = "ResetDemoButton"
 	reset_button.text = "Reset Demonstration"
 	reset_button.pressed.connect(_reset_demonstration)
 	$CanvasLayer/Panel/Info.add_child(reset_button)
 
 	var workshop_button := Button.new()
+	workshop_button.name = "WorkshopButton"
 	workshop_button.text = "Open Rocket Workshop"
 	workshop_button.pressed.connect(func() -> void:
 		get_tree().change_scene_to_file("res://scenes/workshop/workshop.tscn")

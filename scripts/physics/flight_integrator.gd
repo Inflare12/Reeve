@@ -70,7 +70,7 @@ static func step(
 			area = vehicle_cd_area + recovery_cd_area
 
 	state.applied_thrust_n = thrust_n
-	var aerodynamic_force_world := Vector3.ZERO
+	var old_acceleration: Vector3
 	if model.has("aerodynamic_model"):
 		var aerodynamic_configuration: Variant = model.get("aerodynamic_model")
 		if not aerodynamic_configuration is Dictionary:
@@ -102,33 +102,23 @@ static func step(
 		)
 		if not bool(aerodynamic_result.get("ok", false)):
 			return false
-		aerodynamic_force_world = aerodynamic_result.total_aerodynamic_force_n
-		var recovery_area: float = 0.0
+		var aerodynamic_force_world: Vector3 = aerodynamic_result.total_aerodynamic_force_n
 		if recovery_configuration is Dictionary and not recovery_configuration.is_empty():
-			if ReeveRecoveryModel.is_deployed(state.position_m.y, state.velocity_m_s.y, recovery_configuration):
-				recovery_area = float(recovery_configuration.drag_coefficient) * float(recovery_configuration.canopy_area_m2)
-		if recovery_area > 0.0 and flow_speed > 0.000001:
-			var density: float = float(atmosphere.density_kg_m3)
-			aerodynamic_force_world += -0.5 * density * recovery_area * flow_speed * relative_air_velocity
-		var gravity_force_acceleration := Vector3.DOWN * ReeveAtmosphere.gravity_at_altitude(state.position_m.y)
-		var old_acceleration := (thrust_direction.normalized() * thrust_n + aerodynamic_force_world) / maxf(state.mass_kg, 0.000001) + gravity_force_acceleration
-		state.applied_thrust_n = thrust_n
-		var available_mass_above_dry: float = maxf(state.mass_kg - dry_mass_kg, 0.0)
-		var consumed: float = minf(mass_flow_kg_s * dt_s, minf(state.propellant_remaining_kg, available_mass_above_dry))
-		state.propellant_remaining_kg -= consumed
-		state.mass_kg = maxf(dry_mass_kg, state.mass_kg - consumed)
-		state.velocity_m_s += old_acceleration * dt_s
-		state.position_m += state.velocity_m_s * dt_s
-		state.acceleration_m_s2 = old_acceleration
-		return _integrate_rotation(state, dt_s, model)
-	var old_acceleration := calculate_acceleration(
-		state, thrust_n, thrust_direction, cd, area, wind_velocity_m_s, atmosphere
-	)
+			if ReeveRecoveryModel.is_deployed(state.position_m.y, state.velocity_m_s.y, recovery_configuration) and flow_speed > 0.000001:
+				var recovery_cd_area: float = float(recovery_configuration.drag_coefficient) * float(recovery_configuration.canopy_area_m2)
+				aerodynamic_force_world += -0.5 * float(atmosphere.density_kg_m3) * recovery_cd_area * flow_speed * relative_air_velocity
+		var gravity_acceleration := Vector3.DOWN * ReeveAtmosphere.gravity_at_altitude(state.position_m.y)
+		var thrust_force := thrust_direction.normalized() * thrust_n if thrust_direction.length_squared() > 0.000001 else Vector3.ZERO
+		old_acceleration = (thrust_force + aerodynamic_force_world) / maxf(state.mass_kg, 0.000001) + gravity_acceleration
+	else:
+		old_acceleration = calculate_acceleration(
+			state, thrust_n, thrust_direction, cd, area, wind_velocity_m_s, atmosphere
+		)
+
 	var available_mass_above_dry: float = maxf(state.mass_kg - dry_mass_kg, 0.0)
 	var consumed: float = minf(mass_flow_kg_s * dt_s, minf(state.propellant_remaining_kg, available_mass_above_dry))
 	state.propellant_remaining_kg -= consumed
 	state.mass_kg = maxf(dry_mass_kg, state.mass_kg - consumed)
-
 	state.velocity_m_s += old_acceleration * dt_s
 	state.position_m += state.velocity_m_s * dt_s
 	state.acceleration_m_s2 = old_acceleration

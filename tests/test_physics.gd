@@ -14,6 +14,7 @@ func _initialize() -> void:
 	failures += _check_component_mass()
 	failures += _check_invalid_component_dimensions()
 	failures += _check_configuration_rollup()
+	failures += _check_flight_handoff_data()
 	failures += _check_configuration_serialization()
 	failures += _check_aerodynamic_force_model()
 	failures += _check_ground_contact_event()
@@ -638,5 +639,38 @@ func _check_atmosphere_modifiers() -> int:
 	var invalid := ReeveAtmosphere.sample(1000.0, {"pressure_scale": 0.0})
 	if bool(invalid.get("ok", true)):
 		push_error("Atmosphere accepted a non-positive pressure scale")
+		return 1
+	return 0
+
+func _check_flight_handoff_data() -> int:
+	var configuration := ReeveRocketConfiguration.new()
+	var shell := ReeveRocketComponent.new()
+	shell.component_id = "main_fuselage"
+	shell.display_name = "Main fuselage"
+	shell.geometry_type = "cylinder_shell"
+	shell.material_id = "aluminium_6061_t6"
+	shell.dimensions_m = {"outer_radius": 0.1, "wall_thickness": 0.002, "length": 2.0}
+	if not configuration.add_component(shell):
+		push_error("Could not create handoff fuselage component")
+		return 1
+	var payload := ReeveRocketComponent.new()
+	payload.component_id = "payload"
+	payload.display_name = "Payload"
+	payload.geometry_type = "user_mass"
+	payload.material_id = "aluminium_6061_t6"
+	payload.user_mass_kg = 3.0
+	if not configuration.add_component(payload):
+		push_error("Could not create handoff payload mass")
+		return 1
+	var handoff := configuration.get_flight_handoff()
+	if not bool(handoff.get("ok", false)):
+		push_error("Valid workshop configuration did not produce flight handoff data")
+		return 1
+	var expected_area: float = PI * 0.1 * 0.1
+	if absf(float(handoff.total_mass_kg) - (shell.calculate_mass_kg() + 3.0)) > 0.000001 or absf(float(handoff.frontal_reference_area_m2) - expected_area) > 0.000001:
+		push_error("Workshop flight handoff mass or reference area is incorrect")
+		return 1
+	if bool(handoff.drag_coefficient_supplied) or bool(handoff.propulsion_profile_supplied):
+		push_error("Workshop handoff falsely claimed unknown propulsion or drag data")
 		return 1
 	return 0

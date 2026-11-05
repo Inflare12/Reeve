@@ -36,6 +36,7 @@ func _build_environment() -> void:
 	add_child(light)
 
 	var camera := Camera3D.new()
+	camera.name = "WorkshopCamera"
 	camera.position = Vector3(8.0, 5.0, 10.0)
 	camera.look_at(Vector3(0.0, 2.0, 0.0), Vector3.UP)
 	camera.current = true
@@ -53,6 +54,7 @@ func _build_environment() -> void:
 	add_child(ground)
 
 	rocket_visual = Node3D.new()
+	rocket_visual.name = "RocketVisual"
 	add_child(rocket_visual)
 
 func _build_interface() -> void:

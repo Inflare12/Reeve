@@ -368,7 +368,7 @@ func _check_recovery_model() -> int:
 	if not ReeveRecoveryModel.validate(config).is_empty():
 		push_error("Valid educational recovery parameters were rejected")
 		return 1
-	if ReeveRecoveryModel.is_deployed(101.0, config) or not ReeveRecoveryModel.is_deployed(100.0, config):
+	if ReeveRecoveryModel.is_deployed(100.0, -1.0, config) == false or ReeveRecoveryModel.is_deployed(100.0, 1.0, config) or ReeveRecoveryModel.is_deployed(101.0, -1.0, config) or ReeveRecoveryModel.is_deployed(100.0, 0.0, config):
 		push_error("Recovery deployment altitude condition is incorrect")
 		return 1
 	var result := ReeveRecoveryModel.calculate_acceleration(10.0, 1.2, Vector3.DOWN * 10.0, 8.0, 1.5)

@@ -38,12 +38,12 @@ static func step(
 		return false
 
 	var atmosphere: Dictionary = ReeveAtmosphere.sample(state.position_m.y)
+	var dry_mass_kg: float = maxf(float(model.get("dry_mass_kg", 0.001)), 0.001)
 	var thrust_n: float = maxf(float(model.get("thrust_n", 0.0)), 0.0)
 	if state.propellant_remaining_kg <= 0.0 or state.mass_kg <= dry_mass_kg:
 		thrust_n = 0.0
 	var thrust_direction: Vector3 = model.get("thrust_direction", Vector3.UP)
 	var mass_flow_kg_s: float = maxf(float(model.get("mass_flow_kg_s", 0.0)), 0.0)
-	var dry_mass_kg: float = maxf(float(model.get("dry_mass_kg", 0.001)), 0.001)
 	var cd: float = maxf(float(model.get("drag_coefficient", 0.5)), 0.0)
 	var area: float = maxf(float(model.get("reference_area_m2", 0.01)), 0.0)
 

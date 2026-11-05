@@ -34,6 +34,21 @@ func _initialize() -> void:
 		push_error("Scene status label is missing")
 		failures += 1
 
+	var gravity_button: Button = null
+	for button in instance.find_children("*", "Button", true, false):
+		if button.text == "Run Gravity-Only Drop Test":
+			gravity_button = button
+	if gravity_button == null:
+		push_error("Gravity-only demonstration button is missing")
+		failures += 1
+	else:
+		gravity_button.pressed.emit()
+		instance.call("_process", 1.0 / 60.0)
+		var simulation: ReeveSimulationController = instance.get("simulation")
+		if simulation == null or simulation.state == null or simulation.state.time_s <= 0.0:
+			push_error("Gravity-only demonstration did not advance physics")
+			failures += 1
+
 	instance.queue_free()
 	if failures == 0:
 		print("REEVE scene checks: PASS")

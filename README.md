@@ -20,6 +20,7 @@ Implemented foundations:
 - A documented approximate lower-atmosphere model (troposphere and lower stratosphere), including Sutherland-law dynamic viscosity and explicit out-of-domain rejection.
 - Optional deterministic three-axis sinusoidal wind/gust model sampled at every fixed physics step.
 - A coefficient-driven aerodynamic module calculating Mach, dynamic pressure, Reynolds number, drag and supplied-slope lift without inventing vehicle coefficients.
+- Optional attitude-coupled aerodynamic force path using user-supplied Mach/Cd curves, reference geometry and lift slope; unsupported Mach extrapolation is rejected.
 - A static-margin calculator using explicitly user-supplied CG and CP positions and a documented coordinate convention.
 - A bounded linear-elastic axial tension estimate with explicit metal/composite strength-reference labels and engineering limitations.
 - A Biot-number-checked lumped-capacitance convective thermal response estimate using supplied heat-transfer inputs.
@@ -34,7 +35,7 @@ Implemented foundations:
 - Live five-channel telemetry plots for altitude, velocity, acceleration, dynamic pressure and mass, driven by recorded simulation samples.
 - Basic analytical checks and model documentation.
 
-Not yet implemented: fully coupled 6-DOF aerodynamic forces and stability derivatives, validated thermal and structural analysis, pressure-vessel and buckling analysis, component-specific geometry editing and complete workshop-to-flight physics handoff, advanced weather, multi-run history comparison and advanced telemetry plotting tools. These must not be inferred from the current scaffold.
+Not yet implemented: fin-resolved aerodynamic moments and stability derivatives, a complete validated 6-DOF aerodynamic model, validated thermal and structural analysis, pressure-vessel and buckling analysis, full component-specific geometry editing, advanced weather, multi-run history comparison and advanced telemetry plotting tools. Workshop-to-flight handoff currently transfers mass and frontal reference geometry; it deliberately does not infer unknown drag or propulsion data. These capabilities must not be inferred from the current scaffold.
 
 ## Requirements
 
@@ -101,7 +102,7 @@ If the executable is named godot4, substitute that command. A successful parser 
 
 ## Model limitations
 
-The translational flight core remains a 3-DOF point-mass model. A separate rotational foundation integrates quaternion attitude and diagonal-inertia angular dynamics from supplied body moments, but aerodynamic forces and stability derivatives are not yet fully coupled to that attitude. The model does not include gimbaling, flexible structures, slosh, compressible CFD, or finite-element stress. Drag uses a supplied or configured coefficient and reference area; this is an educational approximation, not a universal aerodynamic database. The atmosphere is a simplified dry-air profile and excludes meteorological weather variability.
+The translational flight core remains a 3-DOF point-mass model. A separate rotational foundation integrates quaternion attitude and diagonal-inertia angular dynamics from supplied body moments. An optional simplified aerodynamic path couples body-axis angle of attack to translational drag/lift using user-supplied coefficients, but does not generate aerodynamic moments or stability derivatives. The model does not include gimbaling, flexible structures, slosh, compressible CFD, or finite-element stress. Drag uses a supplied or configured coefficient and reference area; this is an educational approximation, not a universal aerodynamic database. The atmosphere is a simplified dry-air profile and excludes meteorological weather variability.
 
 All values shown by the simulator must be traceable to user inputs, supplied data, or documented calculations. Unknown performance data should remain unknown rather than being fabricated.
 

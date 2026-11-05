@@ -15,6 +15,7 @@ func _initialize() -> void:
 		return
 
 	root.add_child(instance)
+	await process_frame
 	var fuselage := instance.get_node_or_null("RocketVisual/Fuselage") as MeshInstance3D
 	var nose := instance.get_node_or_null("RocketVisual/NoseCone") as MeshInstance3D
 	var camera := instance.get_node_or_null("Camera3D") as Camera3D

@@ -268,7 +268,8 @@ func _check_profile_drives_flight() -> int:
 	if absf(controller.state.applied_thrust_n - 100.0) > 0.000001:
 		push_error("Supplied propulsion profile thrust was not applied")
 		return 1
-	if absf(controller.state.mass_kg - 9.99) > 0.000001 or absf(controller.state.propellant_remaining_kg - 1.99) > 0.000001:
+	var expected_consumption: float = 0.1 * controller.state.time_s
+	if absf(controller.state.mass_kg - (10.0 - expected_consumption)) > 0.000001 or absf(controller.state.propellant_remaining_kg - (2.0 - expected_consumption)) > 0.000001:
 		push_error("Supplied propulsion profile mass flow was not applied")
 		return 1
 	return 0

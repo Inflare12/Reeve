@@ -17,7 +17,8 @@ Implemented foundations:
 - Vehicle component collection, duplicate-ID checks, and mass breakdown by category.
 - JSON vehicle configuration save/load support.
 - SI-unit constants and conversion helpers.
-- A documented approximate lower-atmosphere model (troposphere and lower stratosphere).
+- A documented approximate lower-atmosphere model (troposphere and lower stratosphere), including Sutherland-law dynamic viscosity.
+- A coefficient-driven aerodynamic module calculating Mach, dynamic pressure, Reynolds number, drag and supplied-slope lift without inventing vehicle coefficients.
 - A deterministic point-mass translational flight model with gravity, supplied thrust, and quadratic drag.
 - A fixed-step simulation controller with a bounded catch-up accumulator.
 - Telemetry samples and CSV export.
@@ -62,12 +63,14 @@ If the executable is named godot4, substitute that command. A successful parser 
     scripts/workshop/workshop_scene.gd
     data/materials/materials.json
     scripts/physics/atmosphere.gd
+    scripts/aerodynamics/aerodynamics.gd
     scripts/physics/flight_state.gd
     scripts/physics/flight_integrator.gd
     scripts/physics/simulation_controller.gd
     scripts/telemetry/telemetry_recorder.gd
     tests/test_physics.gd
     docs/model_assumptions.md
+    docs/aerodynamics_model.md
 
 ## Model limitations
 

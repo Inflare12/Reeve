@@ -59,6 +59,29 @@ func _initialize() -> void:
 		temperature_offset.value = 5.0
 		pressure_scale.value = 1.1
 
+	var workshop_config := ReeveRocketConfiguration.new()
+	var workshop_shell := ReeveRocketComponent.new()
+	workshop_shell.component_id = "main_fuselage"
+	workshop_shell.display_name = "Test fuselage"
+	workshop_shell.geometry_type = "cylinder_shell"
+	workshop_shell.material_id = "aluminium_6061_t6"
+	workshop_shell.dimensions_m = {"outer_radius": 0.1, "wall_thickness": 0.002, "length": 2.0}
+	var workshop_payload := ReeveRocketComponent.new()
+	workshop_payload.component_id = "mass_payload"
+	workshop_payload.display_name = "Payload"
+	workshop_payload.geometry_type = "user_mass"
+	workshop_payload.material_id = "aluminium_6061_t6"
+	workshop_payload.user_mass_kg = 2.5
+	if not workshop_config.add_component(workshop_shell) or not workshop_config.add_component(workshop_payload) or workshop_config.save_to_file("user://reeve_vehicle.json") != OK:
+		push_error("Could not prepare workshop-to-flight handoff fixture")
+		failures += 1
+	var load_workshop_button := instance.find_child("LoadWorkshopVehicleButton", true, false) as Button
+	if load_workshop_button == null:
+		push_error("Flight Lab workshop vehicle load control is missing")
+		failures += 1
+	else:
+		load_workshop_button.pressed.emit()
+
 	var gravity_button := instance.get_node_or_null("CanvasLayer/Panel/Info/GravityDropButton") as Button
 	if gravity_button == null:
 		push_error("Gravity-only demonstration button is missing")
@@ -72,6 +95,9 @@ func _initialize() -> void:
 			failures += 1
 		elif absf(simulation.wind_velocity_m_s.x - 10.0) > 0.000001 or absf(simulation.wind_velocity_m_s.z + 2.0) > 0.000001:
 			push_error("Flight Lab wind controls were not passed into the simulation")
+			failures += 1
+		elif absf(simulation.state.mass_kg - (workshop_shell.calculate_mass_kg() + 2.5)) > 0.000001 or float(simulation.model.drag_coefficient) != 0.0:
+			push_error("Flight Lab did not transfer workshop mass or incorrectly invented drag coefficient")
 			failures += 1
 		elif absf(float(simulation.model.atmosphere_conditions.temperature_offset_k) - 5.0) > 0.000001 or absf(float(simulation.model.atmosphere_conditions.pressure_scale) - 1.1) > 0.000001:
 			push_error("Flight Lab atmosphere controls were not passed into the simulation")
@@ -109,6 +135,8 @@ func _initialize() -> void:
 				DirAccess.remove_absolute(ProjectSettings.globalize_path("user://reeve_telemetry.csv"))
 			if FileAccess.file_exists("user://reeve_telemetry.json"):
 				DirAccess.remove_absolute(ProjectSettings.globalize_path("user://reeve_telemetry.json"))
+			if FileAccess.file_exists("user://reeve_vehicle.json"):
+				DirAccess.remove_absolute(ProjectSettings.globalize_path("user://reeve_vehicle.json"))
 
 	instance.queue_free()
 	if failures == 0:

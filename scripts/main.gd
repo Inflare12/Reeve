@@ -196,7 +196,7 @@ func _load_workshop_vehicle() -> void:
 	]
 
 func _on_camera_mode_selected(index: int) -> void:
-	camera_mode = clampi(index, 0, 3)
+	camera_mode = clampi(index, 0, 5)
 	if simulation.state != null:
 		_update_flight_display()
 
@@ -261,7 +261,7 @@ func _single_step() -> void:
 
 func _update_time_scale_label() -> void:
 	if time_scale_label != null:
-		time_scale_label.text = "Simulation time scale: %.3gx" % time_scale
+		time_scale_label.text = "Simulation time scale: %.3fx" % time_scale
 
 func _export_csv() -> void:
 	if simulation.telemetry.samples.is_empty():

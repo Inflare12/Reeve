@@ -17,7 +17,8 @@ func _ready() -> void:
 func _build_environment() -> void:
 	var world_environment := WorldEnvironment.new()
 	var environment := Environment.new()
-	environment.background_mode = Environment.BG_SKY
+	environment.background_mode = Environment.BG_COLOR
+	environment.background_color = Color(0.055, 0.075, 0.105)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.55, 0.62, 0.75)
 	environment.ambient_light_energy = 0.7

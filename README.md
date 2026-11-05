@@ -32,7 +32,7 @@ Implemented foundations:
 - Lightweight 3D launch environment with ground plane, launch pad, ambient lighting and shadows; selectable external-chase, side-observation, ground-observation, rocket-follow, free (WASD/QE) and engineering-inspection cameras.
 - Live gravity-only drop demonstration with position, speed, acceleration, wind-relative dynamic pressure, mass and time telemetry.
 - Flight Lab controls for horizontal wind velocity, temperature offset, pressure scaling, pause/resume, exact single-step execution, bounded simulation time scaling, and CSV/JSON telemetry export.
-- Telemetry samples with CSV and unit-labelled JSON export; Mach and dynamic pressure are computed from air-relative velocity including the configured wind vector. JSON exports also include state-triggered mission events such as apogee, descent and ground contact.
+- Telemetry samples with CSV and unit-labelled JSON export, including actual mass flow and derived specific impulse/effective exhaust velocity; Mach and dynamic pressure are computed from air-relative velocity including the configured wind vector. JSON exports also include state-triggered mission events such as apogee, descent and ground contact.
 - Live five-channel telemetry plots for altitude, velocity, acceleration, dynamic pressure and mass, driven by recorded simulation samples.
 - Basic analytical checks and model documentation.
 

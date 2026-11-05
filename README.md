@@ -10,7 +10,8 @@ This repository was empty when the initial project scaffold was created. The fir
 
 Implemented foundations:
 - Component records for cylindrical shells, rectangular plates, and user-entered masses.
-- Interactive 3D Rocket Workshop with editable fuselage length, diameter, wall thickness and material selection.
+- Interactive 3D Rocket Workshop with editable fuselage length, diameter, wall thickness, fin count/span/chord and material selection.
+- Conceptual fin meshes and plate-mass estimates included in the vehicle mass roll-up.
 - Vehicle configuration save/load to the Godot user-data directory (`user://reeve_vehicle.json`).
 - Initial material catalogue with explicitly approximate reference properties.
 - Vehicle component collection, duplicate-ID checks, and mass breakdown by category.

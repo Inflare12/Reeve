@@ -27,6 +27,9 @@ func record(
 	var air_speed_m_s: float = relative_air_velocity_m_s.length()
 	var horizontal_speed_m_s: float = Vector2(state.velocity_m_s.x, state.velocity_m_s.z).length()
 	var sound_speed: float = maxf(float(atmosphere.get("speed_of_sound_m_s", 0.0)), 0.001)
+	var mass_flow_kg_s: float = state.applied_mass_flow_kg_s
+	var specific_impulse_s: float = thrust_n / (mass_flow_kg_s * ReeveConstants.STANDARD_GRAVITY) if mass_flow_kg_s > 0.0 else 0.0
+	var effective_exhaust_velocity_m_s: float = specific_impulse_s * ReeveConstants.STANDARD_GRAVITY
 	samples.append({
 		"time_s": state.time_s,
 		"altitude_m": state.position_m.y,
@@ -44,6 +47,9 @@ func record(
 		"mass_kg": state.mass_kg,
 		"propellant_remaining_kg": state.propellant_remaining_kg,
 		"thrust_n": thrust_n,
+		"mass_flow_kg_s": mass_flow_kg_s,
+		"specific_impulse_s": specific_impulse_s,
+		"effective_exhaust_velocity_m_s": effective_exhaust_velocity_m_s,
 		"mach": air_speed_m_s / sound_speed,
 		"dynamic_pressure_pa": 0.5 * float(atmosphere.get("density_kg_m3", 0.0)) * air_speed_m_s * air_speed_m_s,
 		"pressure_pa": float(atmosphere.get("pressure_pa", 0.0)),
@@ -64,7 +70,8 @@ func export_csv(path: String) -> Error:
 		"velocity_m_s", "horizontal_velocity_m_s", "vertical_velocity_m_s",
 		"relative_air_speed_m_s", "wind_speed_m_s", "acceleration_m_s2",
 		"acceleration_x_m_s2", "acceleration_y_m_s2", "acceleration_z_m_s2",
-		"mass_kg", "propellant_remaining_kg", "thrust_n", "mach",
+		"mass_kg", "propellant_remaining_kg", "thrust_n", "mass_flow_kg_s",
+		"specific_impulse_s", "effective_exhaust_velocity_m_s", "mach",
 		"dynamic_pressure_pa", "pressure_pa", "density_kg_m3", "temperature_k"
 	]
 	file.store_line(",".join(headers))
@@ -92,6 +99,9 @@ func export_json(path: String) -> Error:
 			"acceleration": "m/s^2",
 			"mass": "kg",
 			"thrust": "N",
+			"mass_flow": "kg/s",
+			"specific_impulse": "s",
+			"effective_exhaust_velocity": "m/s",
 			"pressure": "Pa",
 			"density": "kg/m^3",
 			"temperature": "K"

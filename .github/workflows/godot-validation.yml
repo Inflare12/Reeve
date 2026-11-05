@@ -25,3 +25,6 @@ jobs:
 
       - name: Run physics checks
         run: godot --headless --path . --script tests/test_physics.gd
+
+      - name: Run main scene smoke test
+        run: godot --headless --path . --script tests/test_scene.gd

@@ -8,6 +8,8 @@ func _initialize() -> void:
 	failures += _check_drag_opposes_motion()
 	failures += _check_mass_accounting()
 	failures += _check_fixed_step_controller()
+	failures += _check_component_mass()
+	failures += _check_configuration_rollup()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -74,5 +76,44 @@ func _check_fixed_step_controller() -> int:
 	var steps := controller.advance_frame(1.0 / 60.0)
 	if steps != 2 or absf(controller.state.time_s - 1.0 / 60.0) > 0.000001:
 		push_error("Fixed-step accumulator did not execute the expected two steps")
+		return 1
+	return 0
+
+func _check_component_mass() -> int:
+	var component := ReeveRocketComponent.new()
+	component.component_id = "test_tube"
+	component.display_name = "Test cylindrical shell"
+	component.geometry_type = "cylinder_shell"
+	component.material_id = "aluminium_6061_t6"
+	component.dimensions_m = {
+		"outer_radius": 0.1,
+		"wall_thickness": 0.002,
+		"length": 1.0
+	}
+	var expected_volume: float = PI * (0.1 * 0.1 - 0.098 * 0.098)
+	var expected_mass: float = expected_volume * 2700.0
+	var actual_mass: float = component.calculate_mass_kg()
+	if absf(actual_mass - expected_mass) > 0.000001:
+		push_error("Cylinder shell mass calculation failed")
+		return 1
+	return 0
+
+func _check_configuration_rollup() -> int:
+	var configuration := ReeveRocketConfiguration.new()
+	var component := ReeveRocketComponent.new()
+	component.component_id = "payload"
+	component.display_name = "User-estimated payload"
+	component.geometry_type = "user_mass"
+	component.material_id = "aluminium_6061_t6"
+	component.user_mass_kg = 1.25
+	if not configuration.add_component(component):
+		push_error("Valid component was rejected")
+		return 1
+	if configuration.add_component(component):
+		push_error("Duplicate component ID was accepted")
+		return 1
+	var breakdown := configuration.get_mass_breakdown()
+	if int(breakdown.component_count) != 1 or absf(float(breakdown.total_mass_kg) - 1.25) > 0.000001:
+		push_error("Configuration mass roll-up failed")
 		return 1
 	return 0

@@ -217,6 +217,13 @@ func _check_ground_contact_event() -> int:
 	if not controller.ground_contact or controller.running or absf(controller.state.position_m.y) > 0.000001 or controller.state.velocity_m_s.length() > 0.000001:
 		push_error("Ground-contact event did not stop and settle: contact=%s running=%s y=%.9f vy=%.9f t=%.9f error=%s" % [controller.ground_contact, controller.running, controller.state.position_m.y, controller.state.velocity_m_s.y, controller.state.time_s, controller.last_error])
 		return 1
+	var ground_event: Dictionary = {}
+	for event in controller.telemetry.events:
+		if str(event.event) == "ground_contact":
+			ground_event = event
+	if ground_event.is_empty() or float(ground_event.details.get("impact_speed_m_s", 0.0)) <= 0.0:
+		push_error("Ground-contact event did not preserve pre-contact impact speed")
+		return 1
 	return 0
 
 func _check_supplied_propulsion_profile() -> int:

@@ -48,12 +48,16 @@ func _initialize() -> void:
 
 	var wind_x := instance.find_child("WindXInput", true, false) as SpinBox
 	var wind_z := instance.find_child("WindZInput", true, false) as SpinBox
-	if wind_x == null or wind_z == null:
-		push_error("Flight Lab horizontal wind controls are missing")
+	var temperature_offset := instance.find_child("TemperatureOffsetInput", true, false) as SpinBox
+	var pressure_scale := instance.find_child("PressureScaleInput", true, false) as SpinBox
+	if wind_x == null or wind_z == null or temperature_offset == null or pressure_scale == null:
+		push_error("Flight Lab wind and atmosphere controls are missing")
 		failures += 1
 	else:
 		wind_x.value = 10.0
 		wind_z.value = -2.0
+		temperature_offset.value = 5.0
+		pressure_scale.value = 1.1
 
 	var gravity_button := instance.get_node_or_null("CanvasLayer/Panel/Info/GravityDropButton") as Button
 	if gravity_button == null:
@@ -68,6 +72,9 @@ func _initialize() -> void:
 			failures += 1
 		elif absf(simulation.wind_velocity_m_s.x - 10.0) > 0.000001 or absf(simulation.wind_velocity_m_s.z + 2.0) > 0.000001:
 			push_error("Flight Lab wind controls were not passed into the simulation")
+			failures += 1
+		elif absf(float(simulation.model.atmosphere_conditions.temperature_offset_k) - 5.0) > 0.000001 or absf(float(simulation.model.atmosphere_conditions.pressure_scale) - 1.1) > 0.000001:
+			push_error("Flight Lab atmosphere controls were not passed into the simulation")
 			failures += 1
 		elif altitude_plot == null or altitude_plot.samples.is_empty():
 			push_error("Live altitude plot did not receive simulation telemetry")

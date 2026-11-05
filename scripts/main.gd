@@ -5,6 +5,9 @@ extends Node3D
 @onready var camera: Camera3D = $Camera3D
 
 var simulation := ReeveSimulationController.new()
+var time_scale: float = 1.0
+var run_button: Button
+var time_scale_label: Label
 
 func _ready() -> void:
 	camera.look_at(Vector3(0.0, 2.0, 0.0), Vector3.UP)
@@ -22,6 +25,53 @@ func _ready() -> void:
 	reset_button.pressed.connect(_reset_demonstration)
 	$CanvasLayer/Panel/Info.add_child(reset_button)
 
+	var pause_button := Button.new()
+	pause_button.name = "PauseResumeButton"
+	pause_button.text = "Pause / Resume"
+	pause_button.pressed.connect(_toggle_pause)
+	$CanvasLayer/Panel/Info.add_child(pause_button)
+
+	var step_button := Button.new()
+	step_button.name = "SingleStepButton"
+	step_button.text = "Advance One Physics Step"
+	step_button.pressed.connect(_single_step)
+	$CanvasLayer/Panel/Info.add_child(step_button)
+
+	time_scale_label = Label.new()
+	time_scale_label.name = "TimeScaleLabel"
+	$CanvasLayer/Panel/Info.add_child(time_scale_label)
+	_update_time_scale_label()
+
+	var slower_button := Button.new()
+	slower_button.name = "SlowerButton"
+	slower_button.text = "0.5x Simulation Time"
+	slower_button.pressed.connect(func() -> void:
+		time_scale = maxf(0.125, time_scale * 0.5)
+		_update_time_scale_label()
+	)
+	$CanvasLayer/Panel/Info.add_child(slower_button)
+
+	var faster_button := Button.new()
+	faster_button.name = "FasterButton"
+	faster_button.text = "2x Simulation Time"
+	faster_button.pressed.connect(func() -> void:
+		time_scale = minf(8.0, time_scale * 2.0)
+		_update_time_scale_label()
+	)
+	$CanvasLayer/Panel/Info.add_child(faster_button)
+
+	var export_csv_button := Button.new()
+	export_csv_button.name = "ExportCsvButton"
+	export_csv_button.text = "Export Telemetry CSV"
+	export_csv_button.pressed.connect(_export_csv)
+	$CanvasLayer/Panel/Info.add_child(export_csv_button)
+
+	var export_json_button := Button.new()
+	export_json_button.name = "ExportJsonButton"
+	export_json_button.text = "Export Telemetry JSON"
+	export_json_button.pressed.connect(_export_json)
+	$CanvasLayer/Panel/Info.add_child(export_json_button)
+
 	var workshop_button := Button.new()
 	workshop_button.name = "WorkshopButton"
 	workshop_button.text = "Open Rocket Workshop"
@@ -33,12 +83,51 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not simulation.running:
 		return
-	simulation.advance_frame(delta)
+	simulation.advance_frame(delta, time_scale)
 	_update_flight_display()
 	if simulation.ground_contact:
 		status_label.text = "GROUND CONTACT — demonstration complete"
 	elif not simulation.last_error.is_empty():
 		status_label.text = "SIMULATION ERROR — %s" % simulation.last_error
+
+func _toggle_pause() -> void:
+	if simulation.state == null:
+		status_label.text = "Start a demonstration before pausing."
+	elif simulation.running:
+		simulation.pause()
+		status_label.text = "PAUSED — simulation state preserved"
+	else:
+		simulation.resume()
+		status_label.text = "RUNNING — simulation resumed"
+
+func _single_step() -> void:
+	if simulation.state == null:
+		status_label.text = "Start a demonstration before stepping."
+		return
+	simulation.pause()
+	if simulation.step_once():
+		status_label.text = "PAUSED — advanced exactly one %.6f s physics step" % simulation.fixed_dt_s
+		_update_flight_display()
+	else:
+		status_label.text = "STEP FAILED — %s" % simulation.last_error
+
+func _update_time_scale_label() -> void:
+	if time_scale_label != null:
+		time_scale_label.text = "Simulation time scale: %.3gx" % time_scale
+
+func _export_csv() -> void:
+	if simulation.telemetry.samples.is_empty():
+		status_label.text = "No telemetry samples to export."
+		return
+	var result: Error = simulation.telemetry.export_csv("user://reeve_telemetry.csv")
+	status_label.text = "CSV exported to user://reeve_telemetry.csv" if result == OK else "CSV export failed: %s" % error_string(result)
+
+func _export_json() -> void:
+	if simulation.telemetry.samples.is_empty():
+		status_label.text = "No telemetry samples to export."
+		return
+	var result: Error = simulation.telemetry.export_json("user://reeve_telemetry.json")
+	status_label.text = "JSON exported to user://reeve_telemetry.json" if result == OK else "JSON export failed: %s" % error_string(result)
 
 func _start_gravity_drop() -> void:
 	var initial_state := ReeveFlightState.new()
@@ -73,7 +162,8 @@ func _update_flight_display() -> void:
 	var state := simulation.state
 	var atmosphere := ReeveAtmosphere.sample(state.position_m.y)
 	var speed: float = state.velocity_m_s.length()
-	var dynamic_pressure: float = 0.5 * float(atmosphere.density_kg_m3) * speed * speed
+	var relative_air_speed: float = (state.velocity_m_s - simulation.wind_velocity_m_s).length()
+	var dynamic_pressure: float = 0.5 * float(atmosphere.density_kg_m3) * relative_air_speed * relative_air_speed
 	$RocketVisual.position = state.position_m
 	camera.position = state.position_m + Vector3(10.0, 6.0, 13.0)
 	camera.look_at(state.position_m + Vector3.UP * 2.0, Vector3.UP)

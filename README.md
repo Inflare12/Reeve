@@ -9,6 +9,10 @@ REEVE is an educational, SI-unit, 3D rocket-flight simulation laboratory built w
 This repository was empty when the initial project scaffold was created. The first implementation milestone establishes the Godot project, a modular physics core, a minimal 3D scene, telemetry recording, and an initial validation suite.
 
 Implemented foundations:
+- Component records for cylindrical shells, rectangular plates, and user-entered masses.
+- Initial material catalogue with explicitly approximate reference properties.
+- Vehicle component collection, duplicate-ID checks, and mass breakdown by category.
+- JSON vehicle configuration save/load support.
 - SI-unit constants and conversion helpers.
 - A documented approximate lower-atmosphere model (troposphere and lower stratosphere).
 - A deterministic point-mass translational flight model with gravity, supplied thrust, and quadratic drag.
@@ -46,6 +50,10 @@ If the executable is named godot4, substitute that command. A successful parser 
     scenes/main/main.tscn
     scripts/main.gd
     scripts/physics/constants.gd
+    scripts/materials/material_catalog.gd
+    scripts/workshop/rocket_component.gd
+    scripts/workshop/rocket_configuration.gd
+    data/materials/materials.json
     scripts/physics/atmosphere.gd
     scripts/physics/flight_state.gd
     scripts/physics/flight_integrator.gd
@@ -63,8 +71,8 @@ All values shown by the simulator must be traceable to user inputs, supplied dat
 ## Development sequence
 
 1. Stabilize project and physics foundations.
-2. Build component-based 3D workshop and mass accounting.
-3. Add material property records and clearly bounded structural estimates.
+2. Expand component-based 3D workshop and connect editable parameters to the scene.
+3. Expand material property records and clearly bounded structural estimates.
 4. Extend environment and atmospheric inputs.
 5. Validate and extend flight dynamics.
 6. Add generic supplied-data propulsion profiles.

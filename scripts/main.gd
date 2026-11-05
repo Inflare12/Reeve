@@ -18,10 +18,8 @@ func _ready() -> void:
 
 	wind_x_input = _add_environment_spinbox("Wind X velocity (m/s)", -100.0, 100.0, 0.0, 0.5)
 	wind_x_input.name = "WindXInput"
-	$CanvasLayer/Panel/Info.add_child(wind_x_input)
 	wind_z_input = _add_environment_spinbox("Wind Z velocity (m/s)", -100.0, 100.0, 0.0, 0.5)
 	wind_z_input.name = "WindZInput"
-	$CanvasLayer/Panel/Info.add_child(wind_z_input)
 
 	var gravity_button := Button.new()
 	gravity_button.name = "GravityDropButton"

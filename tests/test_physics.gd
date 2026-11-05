@@ -470,7 +470,8 @@ func _check_quaternion_rigid_body_dynamics() -> int:
 		return 1
 	var rotated_state := ReeveFlightState.new()
 	rotated_state.position_m.y = 100.0
-	rotated_state.mass_kg = 1.0
+	rotated_state.mass_kg = 2.0
+	rotated_state.propellant_remaining_kg = 1.0
 	rotated_state.orientation = Quaternion(Vector3.BACK, PI * 0.5)
 	var thrust_model := {
 		"dry_mass_kg": 1.0,

@@ -102,12 +102,16 @@ func step_once() -> bool:
 		telemetry.record_event("recovery_deployment", state, recovery_configuration)
 	var ground_altitude_m: float = float(model.get("ground_altitude_m", -INF))
 	if state.position_m.y <= ground_altitude_m:
+		var impact_velocity_m_s: Vector3 = state.velocity_m_s
 		state.position_m.y = ground_altitude_m
 		state.velocity_m_s = Vector3.ZERO
 		state.acceleration_m_s2 = Vector3.ZERO
 		ground_contact = true
 		running = false
-		telemetry.record_event("ground_contact", state)
+		telemetry.record_event("ground_contact", state, {
+			"impact_velocity_m_s": impact_velocity_m_s,
+			"impact_speed_m_s": impact_velocity_m_s.length()
+		})
 	var atmosphere := ReeveAtmosphere.sample(state.position_m.y)
 	if not bool(atmosphere.get("ok", false)):
 		last_error = "Telemetry atmosphere sample is outside the supported model domain."

@@ -11,6 +11,7 @@ func _initialize() -> void:
 	failures += _check_component_mass()
 	failures += _check_configuration_rollup()
 	failures += _check_configuration_serialization()
+	failures += _check_aerodynamic_force_model()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -145,5 +146,40 @@ func _check_configuration_serialization() -> int:
 	var result := restored.get_mass_breakdown()
 	if restored.vehicle_name != "Serialization Test" or int(result.component_count) != 1 or absf(float(result.total_mass_kg) - 2.75) > 0.000001:
 		push_error("Configuration serialization round trip changed data")
+		return 1
+	return 0
+
+func _check_aerodynamic_force_model() -> int:
+	var curve: Array[Dictionary] = [
+		{"mach": 0.0, "cd": 0.5},
+		{"mach": 2.0, "cd": 1.0}
+	]
+	var result := ReeveAerodynamics.calculate_forces(
+		Vector3(0.0, 0.0, 100.0),
+		1.2,
+		1.8e-5,
+		300.0,
+		0.1,
+		1.0,
+		curve,
+		0.1,
+		2.0,
+		Vector3.UP
+	)
+	if not bool(result.get("ok", false)):
+		push_error("Aerodynamic model rejected a valid supplied-data case")
+		return 1
+	if absf(float(result.dynamic_pressure_pa) - 6000.0) > 0.001:
+		push_error("Dynamic pressure calculation failed")
+		return 1
+	if absf(float(result.drag_coefficient) - (0.5 + 0.5 / 3.0)) > 0.0001:
+		push_error("Mach interpolation of supplied drag curve failed")
+		return 1
+	if Vector3(result.drag_force_n).z >= 0.0 or Vector3(result.lift_force_n).y <= 0.0:
+		push_error("Aerodynamic force directions are incorrect")
+		return 1
+	var outside := ReeveAerodynamics.interpolate_drag_coefficient(3.0, curve)
+	if bool(outside.get("ok", true)):
+		push_error("Aerodynamic model should reject extrapolation outside supplied data")
 		return 1
 	return 0

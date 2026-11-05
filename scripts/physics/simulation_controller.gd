@@ -183,6 +183,9 @@ func _validate_model(initial_state: ReeveFlightState, supplied_model: Dictionary
 				return "Aerodynamic %s must be finite." % key
 		if float(aerodynamic_configuration.get("reference_area_m2", 0.0)) <= 0.0 or float(aerodynamic_configuration.get("characteristic_length_m", 0.0)) <= 0.0:
 			return "Aerodynamic reference area and characteristic length must be positive."
+		var cp_offset: Vector3 = aerodynamic_configuration.get("center_of_pressure_offset_body_m", Vector3.ZERO)
+		if not cp_offset.is_finite():
+			return "Aerodynamic center-of-pressure offset must contain finite values."
 	var recovery_configuration: Variant = supplied_model.get("recovery", {})
 	if not recovery_configuration is Dictionary:
 		return "Recovery configuration must be a Dictionary."

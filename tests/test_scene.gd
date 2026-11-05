@@ -20,6 +20,9 @@ func _initialize() -> void:
 	var nose := instance.get_node_or_null("RocketVisual/NoseCone") as MeshInstance3D
 	var camera := instance.get_node_or_null("Camera3D") as Camera3D
 	var status := instance.get_node_or_null("CanvasLayer/Panel/Info/Status") as Label
+	var ground := instance.get_node_or_null("GroundPlane") as MeshInstance3D
+	var launch_pad := instance.get_node_or_null("LaunchPad") as MeshInstance3D
+	var world_environment := instance.get_node_or_null("FlightWorldEnvironment") as WorldEnvironment
 
 	var failures := 0
 	if fuselage == null or not (fuselage.mesh is CylinderMesh):
@@ -33,6 +36,9 @@ func _initialize() -> void:
 		failures += 1
 	if status == null:
 		push_error("Scene status label is missing")
+		failures += 1
+	if ground == null or not (ground.mesh is PlaneMesh) or launch_pad == null or not (launch_pad.mesh is CylinderMesh) or world_environment == null:
+		push_error("3D launch environment ground, pad or world lighting is missing")
 		failures += 1
 
 	for control_name in ["PauseResumeButton", "SingleStepButton", "SlowerButton", "FasterButton", "ExportCsvButton", "ExportJsonButton"]:

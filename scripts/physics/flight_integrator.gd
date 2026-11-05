@@ -71,6 +71,7 @@ static func step(
 
 	state.applied_thrust_n = thrust_n
 	var old_acceleration: Vector3
+	var aerodynamic_moment_body := Vector3.ZERO
 	if model.has("aerodynamic_model"):
 		var aerodynamic_configuration: Variant = model.get("aerodynamic_model")
 		if not aerodynamic_configuration is Dictionary:
@@ -107,6 +108,11 @@ static func step(
 			if ReeveRecoveryModel.is_deployed(state.position_m.y, state.velocity_m_s.y, recovery_configuration) and flow_speed > 0.000001:
 				var recovery_cd_area: float = float(recovery_configuration.drag_coefficient) * float(recovery_configuration.canopy_area_m2)
 				aerodynamic_force_world += -0.5 * float(atmosphere.density_kg_m3) * recovery_cd_area * flow_speed * relative_air_velocity
+		var cp_offset_body: Vector3 = aerodynamic_configuration.get("center_of_pressure_offset_body_m", Vector3.ZERO)
+		if not cp_offset_body.is_finite():
+			return false
+		var aerodynamic_force_body: Vector3 = state.orientation.inverse() * aerodynamic_force_world
+		aerodynamic_moment_body = cp_offset_body.cross(aerodynamic_force_body)
 		var gravity_acceleration := Vector3.DOWN * ReeveAtmosphere.gravity_at_altitude(state.position_m.y)
 		var thrust_force := thrust_direction.normalized() * thrust_n if thrust_direction.length_squared() > 0.000001 else Vector3.ZERO
 		old_acceleration = (thrust_force + aerodynamic_force_world) / maxf(state.mass_kg, 0.000001) + gravity_acceleration
@@ -123,13 +129,13 @@ static func step(
 	state.position_m += state.velocity_m_s * dt_s
 	state.acceleration_m_s2 = old_acceleration
 
-	if not _integrate_rotation(state, dt_s, model):
+	if not _integrate_rotation(state, dt_s, model, aerodynamic_moment_body):
 		return false
 	return state.is_valid()
 
-static func _integrate_rotation(state: ReeveFlightState, dt_s: float, model: Dictionary) -> bool:
+static func _integrate_rotation(state: ReeveFlightState, dt_s: float, model: Dictionary, aerodynamic_moment_body: Vector3 = Vector3.ZERO) -> bool:
 	var inertia: Vector3 = model.get("inertia_diagonal_kg_m2", Vector3.ZERO)
-	var applied_moment_body: Vector3 = model.get("body_moment_nm", Vector3.ZERO)
+	var applied_moment_body: Vector3 = model.get("body_moment_nm", Vector3.ZERO) + aerodynamic_moment_body
 	if applied_moment_body.length_squared() > 0.0 or inertia.length_squared() > 0.0 or state.angular_velocity_rad_s.length_squared() > 0.0:
 		if not inertia.is_finite() or inertia.x <= 0.0 or inertia.y <= 0.0 or inertia.z <= 0.0 or not applied_moment_body.is_finite():
 			return false

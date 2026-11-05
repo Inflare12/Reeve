@@ -12,7 +12,7 @@ Implemented foundations:
 - Component records for cylindrical shells, rectangular plates, and user-entered masses.
 - Interactive 3D Rocket Workshop with editable fuselage length, diameter, wall thickness, fin count/span/chord, material selection, separate conceptual subassembly visuals, selectable component inspection and user-entered masses for tanks, engine, payload, avionics, recovery, sensors and supports.
 - Conceptual fin meshes and plate-mass estimates included in the vehicle mass roll-up.
-- Vehicle configuration save/load to the Godot user-data directory (`user://reeve_vehicle.json`), with a one-click workshop-to-Flight-Lab handoff for total mass and fuselage reference area; unknown Cd and propulsion remain unset.
+- Vehicle configuration save/load to the Godot user-data directory (`user://reeve_vehicle.json`), with a one-click workshop-to-Flight-Lab handoff for total mass, fuselage dimensions and fin visual geometry; unknown Cd and propulsion remain unset.
 - Initial material catalogue with explicitly approximate reference properties.
 - Vehicle component collection, duplicate-ID checks, and mass breakdown by category.
 - JSON vehicle configuration save/load support.

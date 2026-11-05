@@ -1,6 +1,6 @@
 # Educational recovery model
 
-REEVE's recovery model applies a user-supplied parachute drag area after the vehicle descends to or below a configured deployment altitude. It is a simplified point-mass drag model, not a parachute design, packing, deployment reliability, opening-shock or recovery-system qualification tool.
+REEVE's recovery model applies a user-supplied parachute drag area after the vehicle is descending and reaches or falls below a configured deployment altitude. It is a simplified point-mass drag model, not a parachute design, packing, deployment reliability, opening-shock or recovery-system qualification tool.
 
 Configuration fields:
 

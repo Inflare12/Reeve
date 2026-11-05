@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "notice": "Representative room-temperature values for educational mass and introductory elastic-property demonstrations only. Not certified allowables, not design values, and not valid across all temperatures or composite layups.",
+  "materials": {
+    "aluminium_6061_t6": {"density_kg_m3": 2700.0, "youngs_modulus_pa": 68900000000.0, "poisson_ratio": 0.33, "yield_strength_pa": 276000000.0, "ultimate_tensile_strength_pa": 310000000.0, "thermal_conductivity_w_mk": 167.0, "specific_heat_j_kgk": 896.0},
+    "stainless_304": {"density_kg_m3": 8000.0, "youngs_modulus_pa": 193000000000.0, "poisson_ratio": 0.29, "yield_strength_pa": 215000000.0, "ultimate_tensile_strength_pa": 505000000.0, "thermal_conductivity_w_mk": 16.2, "specific_heat_j_kgk": 500.0},
+    "titanium_grade_5": {"density_kg_m3": 4430.0, "youngs_modulus_pa": 114000000000.0, "poisson_ratio": 0.34, "yield_strength_pa": 880000000.0, "ultimate_tensile_strength_pa": 950000000.0, "thermal_conductivity_w_mk": 6.7, "specific_heat_j_kgk": 560.0},
+    "fibreglass_generic": {"density_kg_m3": 1850.0, "youngs_modulus_pa": 25000000000.0, "poisson_ratio": 0.25, "yield_strength_pa": 0.0, "ultimate_tensile_strength_pa": 350000000.0, "thermal_conductivity_w_mk": 0.35, "specific_heat_j_kgk": 800.0},
+    "carbon_fibre_generic": {"density_kg_m3": 1600.0, "youngs_modulus_pa": 70000000000.0, "poisson_ratio": 0.28, "yield_strength_pa": 0.0, "ultimate_tensile_strength_pa": 600000000.0, "thermal_conductivity_w_mk": 5.0, "specific_heat_j_kgk": 800.0}
+  }
+}

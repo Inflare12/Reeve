@@ -25,6 +25,15 @@ func configure(
 	if step_s <= 0.0 or step_s > 0.1 or not is_finite(step_s):
 		last_error = "Fixed timestep must be in the interval (0, 0.1] seconds."
 		return false
+	var supplied_profile: Variant = supplied_model.get("propulsion_profile", null)
+	if supplied_profile != null:
+		if not supplied_profile is ReevePropulsionProfile:
+			last_error = "propulsion_profile must be a validated ReevePropulsionProfile object."
+			return false
+		var profile_error: String = supplied_profile.validate()
+		if not profile_error.is_empty():
+			last_error = "Invalid propulsion profile: %s" % profile_error
+			return false
 	state = initial_state.duplicate_state()
 	model = supplied_model.duplicate(true)
 	wind_velocity_m_s = wind_m_s

@@ -20,6 +20,7 @@ func _initialize() -> void:
 	failures += _check_profile_drives_flight()
 	failures += _check_telemetry_json_export()
 	failures += _check_recovery_model()
+	failures += _check_wind_relative_telemetry()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -385,5 +386,23 @@ func _check_recovery_model() -> int:
 	state.mass_kg = 10.0
 	if invalid_controller.configure(state, {"dry_mass_kg": 10.0, "recovery": {"deployment_altitude_m": -1.0, "canopy_area_m2": 8.0, "drag_coefficient": 1.5}}):
 		push_error("Controller accepted invalid recovery configuration")
+		return 1
+	return 0
+
+func _check_wind_relative_telemetry() -> int:
+	var state := ReeveFlightState.new()
+	state.position_m.y = 100.0
+	state.velocity_m_s = Vector3(10.0, 0.0, 0.0)
+	state.mass_kg = 2.0
+	var wind := Vector3(10.0, 0.0, 0.0)
+	var recorder := ReeveTelemetryRecorder.new()
+	var atmosphere := ReeveAtmosphere.sample(100.0)
+	recorder.record(state, atmosphere, 0.0, wind)
+	var sample: Dictionary = recorder.samples[0]
+	if absf(float(sample.relative_air_speed_m_s)) > 0.000001 or absf(float(sample.dynamic_pressure_pa)) > 0.000001 or absf(float(sample.mach)) > 0.000001:
+		push_error("Wind-relative telemetry did not use air-relative velocity")
+		return 1
+	if absf(float(sample.horizontal_velocity_m_s) - 10.0) > 0.000001 or absf(float(sample.wind_speed_m_s) - 10.0) > 0.000001:
+		push_error("Horizontal velocity or wind telemetry is incorrect")
 		return 1
 	return 0

@@ -28,3 +28,6 @@ jobs:
 
       - name: Run main scene smoke test
         run: godot --headless --path . --script tests/test_scene.gd
+
+      - name: Run workshop smoke test
+        run: godot --headless --path . --script tests/test_workshop.gd

@@ -244,7 +244,8 @@ func _update_model() -> void:
 		component_list.add_item("%s — %.3f kg%s" % [category_name, entered_mass, "" if entered_mass > 0.0 else " (not included)"])
 
 	for child in rocket_visual.get_children():
-		child.queue_free()
+		rocket_visual.remove_child(child)
+		child.free()
 	var shell_mesh := CylinderMesh.new()
 	shell_mesh.top_radius = radius
 	shell_mesh.bottom_radius = radius

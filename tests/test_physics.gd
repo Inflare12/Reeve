@@ -481,6 +481,18 @@ func _check_controller_input_validation() -> int:
 	if not controller.configure(state, {"dry_mass_kg": 8.0}):
 		push_error("Controller rejected valid dry/propellant mass")
 		return 1
+	if not controller.running:
+		push_error("Valid configuration did not start the simulation")
+		return 1
+	if controller.configure(state, {"dry_mass_kg": 11.0}):
+		push_error("Controller accepted invalid reconfiguration")
+		return 1
+	if controller.running:
+		push_error("Failed reconfiguration left the previous simulation running")
+		return 1
+	if not controller.configure(state, {"dry_mass_kg": 8.0}):
+		push_error("Controller could not recover after rejected reconfiguration")
+		return 1
 	controller.advance_frame(0.01, NAN)
 	if controller.running or not controller.last_error.contains("time scale"):
 		push_error("Controller did not stop on non-finite time scale")

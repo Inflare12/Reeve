@@ -3,6 +3,19 @@ extends RefCounted
 ## Stores measured simulation state; does not synthesize or interpolate samples.
 
 var samples: Array[Dictionary] = []
+var events: Array[Dictionary] = []
+
+func record_event(event_name: String, state: ReeveFlightState, details: Dictionary = {}) -> void:
+	if event_name.strip_edges().is_empty() or state == null or not state.is_valid():
+		return
+	events.append({
+		"event": event_name,
+		"time_s": state.time_s,
+		"altitude_m": state.position_m.y,
+		"vertical_velocity_m_s": state.velocity_m_s.y,
+		"mass_kg": state.mass_kg,
+		"details": details.duplicate(true)
+	})
 
 func record(
 	state: ReeveFlightState,
@@ -40,6 +53,7 @@ func record(
 
 func clear() -> void:
 	samples.clear()
+	events.clear()
 
 func export_csv(path: String) -> Error:
 	var file := FileAccess.open(path, FileAccess.WRITE)
@@ -82,7 +96,8 @@ func export_json(path: String) -> Error:
 			"density": "kg/m^3",
 			"temperature": "K"
 		},
-		"samples": samples
+		"samples": samples,
+		"events": events
 	}
 	file.store_string(JSON.stringify(payload, "\t"))
 	file.close()

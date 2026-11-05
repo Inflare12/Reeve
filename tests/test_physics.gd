@@ -651,6 +651,21 @@ func _check_quaternion_rigid_body_dynamics() -> int:
 	if invalid_controller.configure(invalid_state, {"dry_mass_kg": 1.0, "body_moment_nm": Vector3(1.0, 0.0, 0.0)}):
 		push_error("Controller accepted applied moment without a valid inertia tensor")
 		return 1
+	var rollback_state := ReeveFlightState.new()
+	rollback_state.position_m = Vector3(0.0, 100.0, 0.0)
+	rollback_state.velocity_m_s = Vector3(5.0, 0.0, 0.0)
+	rollback_state.mass_kg = 10.0
+	var before := rollback_state.duplicate_state()
+	var invalid_direct_model := {
+		"dry_mass_kg": 10.0,
+		"body_moment_nm": Vector3(1.0, 0.0, 0.0)
+	}
+	if ReeveFlightIntegrator.step(rollback_state, 0.01, invalid_direct_model):
+		push_error("Direct integrator accepted invalid rotational inertia")
+		return 1
+	if rollback_state.time_s != before.time_s or rollback_state.position_m != before.position_m or rollback_state.velocity_m_s != before.velocity_m_s or rollback_state.mass_kg != before.mass_kg or rollback_state.applied_thrust_n != before.applied_thrust_n:
+		push_error("Rejected integration step partially mutated the original flight state")
+		return 1
 	return 0
 
 func _check_time_varying_wind() -> int:

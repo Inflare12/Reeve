@@ -140,7 +140,7 @@ func _initialize() -> void:
 		elif absf(simulation.state.mass_kg - (workshop_shell.calculate_mass_kg() + workshop_fin_mass_kg + 2.5)) > 0.000001 or float(simulation.model.drag_coefficient) != 0.0:
 			push_error("Flight Lab did not transfer workshop mass or incorrectly invented drag coefficient")
 			failures += 1
-		elif absf(float(((instance.get_node("RocketVisual/Fuselage") as MeshInstance3D).mesh as CylinderMesh).height) - 2.0) > 0.000001:
+		elif absf(((instance.get_node("RocketVisual/Fuselage") as MeshInstance3D).mesh as CylinderMesh).height - 2.0) > 0.000001:
 			push_error("Workshop fuselage length was not transferred to the Flight Lab visual")
 			failures += 1
 		elif instance.find_children("WorkshopFin_*", "MeshInstance3D", true, false).size() != 4:

@@ -40,6 +40,12 @@ func _initialize() -> void:
 			push_error("Flight Lab control is missing: %s" % control_name)
 			failures += 1
 
+	var telemetry_panel := instance.get_node_or_null("CanvasLayer/TelemetryPanel") as PanelContainer
+	var altitude_plot := instance.get_node_or_null("CanvasLayer/TelemetryPanel/VBoxContainer/AltitudePlot") as ReeveTelemetryPlot
+	if telemetry_panel == null or altitude_plot == null:
+		push_error("Live telemetry dashboard or altitude plot is missing")
+		failures += 1
+
 	var gravity_button := instance.get_node_or_null("CanvasLayer/Panel/Info/GravityDropButton") as Button
 	if gravity_button == null:
 		push_error("Gravity-only demonstration button is missing")
@@ -50,6 +56,9 @@ func _initialize() -> void:
 		var simulation: ReeveSimulationController = instance.get("simulation")
 		if simulation == null or simulation.state == null or simulation.state.time_s <= 0.0:
 			push_error("Gravity-only demonstration did not advance physics")
+			failures += 1
+		elif altitude_plot == null or altitude_plot.samples.is_empty():
+			push_error("Live altitude plot did not receive simulation telemetry")
 			failures += 1
 		else:
 			var pause_button := instance.get_node("CanvasLayer/Panel/Info/PauseResumeButton") as Button

@@ -20,3 +20,9 @@ using mu_ref = 1.716e-5 Pa s, T_ref = 273.15 K and S = 110.4 K.
 ## Limitations
 
 This is a coefficient-driven educational model, not CFD. It does not derive aerodynamic coefficients from geometry, model shock waves, calculate boundary-layer transition, predict separation, model fin/body interference, or determine stability derivatives. The linear lift model is valid only as an explicitly supplied local approximation. Coefficient data must be independently sourced and its applicable Mach/angle-of-attack range documented before interpreting results.
+
+## Optional flight-integrator coupling
+
+A flight model may include an `aerodynamic_model` dictionary containing the supplied Cd curve, reference area, characteristic length, lift slope and optional body-frame CP offset. The integrator then calculates angle of attack from the current body axis and relative airflow, applies the resulting aerodynamic force and converts a CP-offset force into a body moment. A positive non-zero CP offset requires a positive diagonal inertia tensor.
+
+This is a partial force/moment coupling. The supplied lift slope is a simplified coefficient model, not a fin-resolved aerodynamic database. Rate derivatives, damping, control surfaces, compressibility corrections beyond the user Cd curve and dynamic stability analysis are not implemented.

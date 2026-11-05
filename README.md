@@ -19,7 +19,7 @@ Implemented foundations:
 - SI-unit constants and conversion helpers.
 - A documented approximate lower-atmosphere model (troposphere and lower stratosphere), including Sutherland-law dynamic viscosity.
 - A coefficient-driven aerodynamic module calculating Mach, dynamic pressure, Reynolds number, drag and supplied-slope lift without inventing vehicle coefficients.
-- Validated external propulsion-curve reader with linear interpolation, impulse integration and explicit source-quality labels.
+- Validated external propulsion-curve reader with linear interpolation, impulse integration and explicit source-quality labels; the simulation controller can apply the supplied thrust and mass-flow samples to the flight model.
 - A deterministic point-mass translational flight model with gravity, supplied thrust, and quadratic drag.
 - A fixed-step simulation controller with a bounded catch-up accumulator and optional ground-contact event.
 - Live gravity-only drop demonstration with position, speed, acceleration, dynamic-pressure, mass and time telemetry.

@@ -41,7 +41,7 @@ func _initialize() -> void:
 		push_error("3D launch environment ground, pad or world lighting is missing")
 		failures += 1
 
-	for control_name in ["PauseResumeButton", "SingleStepButton", "SlowerButton", "FasterButton", "ExportCsvButton", "ExportJsonButton"]:
+	for control_name in ["PauseResumeButton", "SingleStepButton", "SlowerButton", "FasterButton", "ExportCsvButton", "ExportJsonButton", "LoadPropulsionProfileButton"]:
 		if instance.get_node_or_null("CanvasLayer/Panel/Info/" + control_name) == null:
 			push_error("Flight Lab control is missing: %s" % control_name)
 			failures += 1
@@ -184,6 +184,39 @@ func _initialize() -> void:
 				DirAccess.remove_absolute(ProjectSettings.globalize_path("user://reeve_telemetry.json"))
 			if FileAccess.file_exists("user://reeve_vehicle.json"):
 				DirAccess.remove_absolute(ProjectSettings.globalize_path("user://reeve_vehicle.json"))
+			var profile_path := "user://reeve_test_profile.json"
+			var profile_file := FileAccess.open(profile_path, FileAccess.WRITE)
+			if profile_file == null:
+				push_error("Could not create synthetic profile fixture")
+				failures += 1
+			else:
+				profile_file.store_string(JSON.stringify({
+					"schema_version": 1,
+					"profile_name": "CI synthetic profile",
+					"data_quality": "synthetic_test",
+					"source_description": "CI-only test fixture; not engine data.",
+					"points": [
+						{"time_s": 0.0, "thrust_n": 100.0, "mass_flow_kg_s": 0.1},
+						{"time_s": 1.0, "thrust_n": 100.0, "mass_flow_kg_s": 0.1}
+					]
+				}))
+				profile_file.close()
+				instance.call("_reset_demonstration")
+				instance.call("_on_propulsion_profile_selected", profile_path)
+				var propellant_input := instance.find_child("PropellantMassInput", true, false) as SpinBox
+				if propellant_input == null:
+					push_error("Flight Lab propellant mass input is missing")
+					failures += 1
+				else:
+					propellant_input.value = 1.0
+					gravity_button.pressed.emit()
+					instance.call("_process", 1.0 / 60.0)
+					var propulsion_simulation: ReeveSimulationController = instance.get("simulation")
+					if propulsion_simulation.state == null or absf(propulsion_simulation.state.mass_kg - (workshop_shell.calculate_mass_kg() + workshop_fin_mass_kg + 2.5 + 1.0 - 0.1 * propulsion_simulation.state.time_s)) > 0.00001 or absf(propulsion_simulation.state.applied_thrust_n - 100.0) > 0.000001:
+						push_error("Loaded supplied thrust curve was not applied with user-entered propellant mass")
+						failures += 1
+				if FileAccess.file_exists(profile_path):
+					DirAccess.remove_absolute(ProjectSettings.globalize_path(profile_path))
 
 	instance.queue_free()
 	if failures == 0:

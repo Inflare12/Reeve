@@ -21,6 +21,10 @@ static func sample(altitude_m: float) -> Dictionary:
 		)
 
 	var density_kg_m3: float = pressure_pa / (ReeveConstants.AIR_GAS_CONSTANT * temperature_k)
+	var sutherland_mu0: float = 1.716e-5
+	var sutherland_t0: float = 273.15
+	var sutherland_s: float = 110.4
+	var dynamic_viscosity_pa_s: float = sutherland_mu0 * pow(temperature_k / sutherland_t0, 1.5) * (sutherland_t0 + sutherland_s) / (temperature_k + sutherland_s)
 	var speed_of_sound_m_s: float = sqrt(ReeveConstants.AIR_GAMMA * ReeveConstants.AIR_GAS_CONSTANT * temperature_k)
 
 	return {
@@ -28,6 +32,7 @@ static func sample(altitude_m: float) -> Dictionary:
 		"temperature_k": temperature_k,
 		"pressure_pa": pressure_pa,
 		"density_kg_m3": density_kg_m3,
+		"dynamic_viscosity_pa_s": dynamic_viscosity_pa_s,
 		"speed_of_sound_m_s": speed_of_sound_m_s
 	}
 

@@ -46,6 +46,15 @@ func _initialize() -> void:
 		push_error("Live telemetry dashboard or altitude plot is missing")
 		failures += 1
 
+	var wind_x := instance.find_child("WindXInput", true, false) as SpinBox
+	var wind_z := instance.find_child("WindZInput", true, false) as SpinBox
+	if wind_x == null or wind_z == null:
+		push_error("Flight Lab horizontal wind controls are missing")
+		failures += 1
+	else:
+		wind_x.value = 10.0
+		wind_z.value = -2.0
+
 	var gravity_button := instance.get_node_or_null("CanvasLayer/Panel/Info/GravityDropButton") as Button
 	if gravity_button == null:
 		push_error("Gravity-only demonstration button is missing")
@@ -56,6 +65,9 @@ func _initialize() -> void:
 		var simulation: ReeveSimulationController = instance.get("simulation")
 		if simulation == null or simulation.state == null or simulation.state.time_s <= 0.0:
 			push_error("Gravity-only demonstration did not advance physics")
+			failures += 1
+		elif absf(simulation.wind_velocity_m_s.x - 10.0) > 0.000001 or absf(simulation.wind_velocity_m_s.z + 2.0) > 0.000001:
+			push_error("Flight Lab wind controls were not passed into the simulation")
 			failures += 1
 		elif altitude_plot == null or altitude_plot.samples.is_empty():
 			push_error("Live altitude plot did not receive simulation telemetry")

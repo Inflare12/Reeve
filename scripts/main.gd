@@ -14,6 +14,8 @@ var wind_z_input: SpinBox
 var temperature_offset_input: SpinBox
 var pressure_scale_input: SpinBox
 var workshop_configuration: ReeveRocketConfiguration
+var camera_mode_selector: OptionButton
+var camera_mode: int = 0
 
 func _ready() -> void:
 	_build_flight_environment()
@@ -28,6 +30,13 @@ func _ready() -> void:
 	temperature_offset_input.name = "TemperatureOffsetInput"
 	pressure_scale_input = _add_environment_spinbox("Pressure scale", 0.5, 1.5, 1.0, 0.01)
 	pressure_scale_input.name = "PressureScaleInput"
+	camera_mode_selector = OptionButton.new()
+	camera_mode_selector.name = "CameraModeSelector"
+	for camera_mode_name in ["External Chase", "Side Observation", "Ground Observation", "Rocket Follow"]:
+		camera_mode_selector.add_item(camera_mode_name)
+	camera_mode_selector.select(0)
+	camera_mode_selector.item_selected.connect(_on_camera_mode_selected)
+	$CanvasLayer/Panel/Info.add_child(camera_mode_selector)
 
 	var gravity_button := Button.new()
 	gravity_button.name = "GravityDropButton"
@@ -186,6 +195,23 @@ func _load_workshop_vehicle() -> void:
 		float(handoff.frontal_reference_area_m2)
 	]
 
+func _on_camera_mode_selected(index: int) -> void:
+	camera_mode = clampi(index, 0, 3)
+	if simulation.state != null:
+		_update_flight_display()
+
+func _update_camera_for_state(target_position: Vector3) -> void:
+	match camera_mode:
+		0:
+			camera.position = target_position + Vector3(10.0, 6.0, 13.0)
+		1:
+			camera.position = target_position + Vector3(0.0, 5.0, 24.0)
+		2:
+			camera.position = Vector3(22.0, 5.0, 22.0)
+		3:
+			camera.position = target_position + Vector3(0.0, 2.5, 7.0)
+	camera.look_at(target_position + Vector3.UP * 2.0, Vector3.UP)
+
 func _toggle_pause() -> void:
 	if simulation.state == null:
 		status_label.text = "Start a demonstration before pausing."
@@ -264,8 +290,7 @@ func _start_gravity_drop() -> void:
 func _reset_demonstration() -> void:
 	simulation.reset()
 	$RocketVisual.position = Vector3.ZERO
-	camera.position = Vector3(10.0, 7.0, 13.0)
-	camera.look_at(Vector3(0.0, 2.0, 0.0), Vector3.UP)
+	_update_camera_for_state(Vector3.ZERO)
 	status_label.text = "READY — no propulsion profile loaded. No flight has been simulated."
 	scope_label.text = "3-DOF point-mass physics foundation"
 	_update_telemetry_plots()
@@ -284,8 +309,7 @@ func _update_flight_display() -> void:
 		var relative_air_speed: float = (state.velocity_m_s - simulation.wind_velocity_m_s).length()
 		dynamic_pressure = 0.5 * float(atmosphere.density_kg_m3) * relative_air_speed * relative_air_speed
 	$RocketVisual.position = state.position_m
-	camera.position = state.position_m + Vector3(10.0, 6.0, 13.0)
-	camera.look_at(state.position_m + Vector3.UP * 2.0, Vector3.UP)
+	_update_camera_for_state(state.position_m)
 	scope_label.text = "Altitude: %.2f m\nSpeed: %.2f m/s\nAcceleration: %.2f m/s²\nDynamic pressure: %.2f Pa\nMass: %.2f kg\nFlight time: %.3f s" % [
 		state.position_m.y,
 		speed,

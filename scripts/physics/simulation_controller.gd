@@ -76,11 +76,18 @@ func advance_frame(frame_delta_s: float, time_scale: float = 1.0) -> int:
 func step_once() -> bool:
 	if state == null or not state.is_valid() or ground_contact:
 		return false
+	var step_wind_velocity_m_s: Vector3 = wind_velocity_m_s
+	if model.has("wind_model"):
+		var wind_sample: Dictionary = ReeveWindModel.sample(state.time_s, model.wind_model)
+		if not bool(wind_sample.get("ok", false)):
+			last_error = "Wind model sample failed: %s" % str(wind_sample.get("error", "unknown error"))
+			return false
+		step_wind_velocity_m_s = wind_sample.velocity_m_s
 	var previous_vertical_velocity_m_s: float = state.velocity_m_s.y
 	var previous_thrust_n: float = state.applied_thrust_n
 	var recovery_configuration: Dictionary = model.get("recovery", {})
 	var recovery_was_deployed: bool = not recovery_configuration.is_empty() and ReeveRecoveryModel.is_deployed(state.position_m.y, state.velocity_m_s.y, recovery_configuration)
-	if not ReeveFlightIntegrator.step(state, fixed_dt_s, model, wind_velocity_m_s):
+	if not ReeveFlightIntegrator.step(state, fixed_dt_s, model, step_wind_velocity_m_s):
 		last_error = "Physics step rejected invalid state or timestep."
 		return false
 	if previous_thrust_n <= 0.0 and state.applied_thrust_n > 0.0:
@@ -105,7 +112,7 @@ func step_once() -> bool:
 	if not bool(atmosphere.get("ok", false)):
 		last_error = "Telemetry atmosphere sample is outside the supported model domain."
 		return false
-	telemetry.record(state, atmosphere, state.applied_thrust_n, wind_velocity_m_s)
+	telemetry.record(state, atmosphere, state.applied_thrust_n, step_wind_velocity_m_s)
 	return true
 
 func pause() -> void:
@@ -134,6 +141,13 @@ func _validate_model(initial_state: ReeveFlightState, supplied_model: Dictionary
 			var value: float = float(supplied_model[key])
 			if not is_finite(value) or value < 0.0:
 				return "%s must be finite and non-negative." % key
+	var wind_configuration: Variant = supplied_model.get("wind_model", {})
+	if not wind_configuration is Dictionary:
+		return "Wind model configuration must be a Dictionary."
+	if not wind_configuration.is_empty():
+		var wind_error: String = ReeveWindModel.validate(wind_configuration)
+		if not wind_error.is_empty():
+			return "Invalid wind model: %s" % wind_error
 	var recovery_configuration: Variant = supplied_model.get("recovery", {})
 	if not recovery_configuration is Dictionary:
 		return "Recovery configuration must be a Dictionary."

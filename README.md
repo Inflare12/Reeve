@@ -23,7 +23,7 @@ Implemented foundations:
 - A deterministic point-mass translational flight model with gravity, supplied thrust, and quadratic drag.
 - A fixed-step simulation controller with a bounded catch-up accumulator and optional ground-contact event.
 - Live gravity-only drop demonstration with position, speed, acceleration, dynamic-pressure, mass and time telemetry.
-- Telemetry samples and CSV export.
+- Telemetry samples with CSV and unit-labelled JSON export.
 - Basic analytical checks and model documentation.
 
 Not yet implemented: full 6-DOF rigid-body dynamics, aerodynamic stability derivatives, validated thermal/structural analysis, vehicle workshop, recovery, advanced weather, or a professional telemetry UI. These must not be inferred from the current scaffold.

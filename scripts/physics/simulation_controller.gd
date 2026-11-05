@@ -144,6 +144,18 @@ func _validate_model(initial_state: ReeveFlightState, supplied_model: Dictionary
 	var direction: Vector3 = supplied_model.get("thrust_direction", Vector3.UP)
 	if not direction.is_finite():
 		return "Thrust direction must contain finite values."
+	var body_direction: Vector3 = supplied_model.get("thrust_direction_body", Vector3.UP)
+	if not body_direction.is_finite():
+		return "Body-frame thrust direction must contain finite values."
+	var inertia: Vector3 = supplied_model.get("inertia_diagonal_kg_m2", Vector3.ZERO)
+	var moment: Vector3 = supplied_model.get("body_moment_nm", Vector3.ZERO)
+	if not inertia.is_finite() or not moment.is_finite():
+		return "Inertia and applied body moment must contain finite values."
+	if moment.length_squared() > 0.0 or inertia.length_squared() > 0.0 or initial_state.angular_velocity_rad_s.length_squared() > 0.0:
+		if inertia.x <= 0.0 or inertia.y <= 0.0 or inertia.z <= 0.0:
+			return "Positive diagonal inertia values are required for rotational dynamics."
+	if supplied_model.has("ground_altitude_m"):
+		return "Thrust direction must contain finite values."
 	if supplied_model.has("ground_altitude_m"):
 		var ground_altitude: float = float(supplied_model.ground_altitude_m)
 		if not is_finite(ground_altitude):

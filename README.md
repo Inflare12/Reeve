@@ -12,6 +12,7 @@ Implemented foundations:
 - SI-unit constants and conversion helpers.
 - A documented approximate lower-atmosphere model (troposphere and lower stratosphere).
 - A deterministic point-mass translational flight model with gravity, supplied thrust, and quadratic drag.
+- A fixed-step simulation controller with bounded frame catch-up.
 - Fixed-step simulation with an accumulator.
 - Telemetry samples and CSV export.
 - Basic analytical checks and model documentation.
@@ -49,6 +50,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     scripts/physics/atmosphere.gd
     scripts/physics/flight_state.gd
     scripts/physics/flight_integrator.gd
+    scripts/physics/simulation_controller.gd
     scripts/telemetry/telemetry_recorder.gd
     tests/test_physics.gd
     docs/model_assumptions.md

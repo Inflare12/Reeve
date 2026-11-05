@@ -83,7 +83,7 @@ static func step(
 
 	var inertia: Vector3 = model.get("inertia_diagonal_kg_m2", Vector3.ZERO)
 	var applied_moment_body: Vector3 = model.get("body_moment_nm", Vector3.ZERO)
-	if applied_moment_body.length_squared() > 0.0 or inertia.length_squared() > 0.0:
+	if applied_moment_body.length_squared() > 0.0 or inertia.length_squared() > 0.0 or state.angular_velocity_rad_s.length_squared() > 0.0:
 		if not inertia.is_finite() or inertia.x <= 0.0 or inertia.y <= 0.0 or inertia.z <= 0.0 or not applied_moment_body.is_finite():
 			return false
 		var angular_momentum_body := Vector3(

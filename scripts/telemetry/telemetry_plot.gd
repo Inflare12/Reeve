@@ -32,10 +32,13 @@ func _draw() -> void:
 		draw_string(font, Vector2(42.0, size.y * 0.65), "Waiting for simulation samples", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 11, Color(0.55, 0.62, 0.7))
 		return
 	var values: PackedFloat64Array = PackedFloat64Array()
+	var times: PackedFloat64Array = PackedFloat64Array()
 	for sample in samples:
 		var value: float = float(sample.get(data_key, NAN))
-		if is_finite(value):
+		var sample_time: float = float(sample.get("time_s", NAN))
+		if is_finite(value) and is_finite(sample_time):
 			values.append(value)
+			times.append(sample_time)
 	if values.is_empty():
 		draw_string(font, Vector2(42.0, size.y * 0.65), "No finite values for this channel", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 11, Color(0.8, 0.58, 0.42))
 		return
@@ -46,8 +49,9 @@ func _draw() -> void:
 		maximum = maxf(maximum, value)
 	var value_range: float = maxf(maximum - minimum, 0.000001)
 	var points := PackedVector2Array()
+	var time_range_s: float = maxf(times[times.size() - 1] - times[0], 0.000001)
 	for index in range(values.size()):
-		var x_fraction: float = float(index) / float(maxi(values.size() - 1, 1))
+		var x_fraction: float = (times[index] - times[0]) / time_range_s
 		var y_fraction: float = (values[index] - minimum) / value_range
 		points.append(Vector2(
 			plot_rect.position.x + x_fraction * plot_rect.size.x,

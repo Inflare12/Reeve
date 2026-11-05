@@ -34,10 +34,7 @@ func _initialize() -> void:
 		push_error("Scene status label is missing")
 		failures += 1
 
-	var gravity_button: Button = null
-	for button in instance.find_children("*", "Button", true, false):
-		if button.text == "Run Gravity-Only Drop Test":
-			gravity_button = button
+	var gravity_button := instance.get_node_or_null("CanvasLayer/Panel/Info/GravityDropButton") as Button
 	if gravity_button == null:
 		push_error("Gravity-only demonstration button is missing")
 		failures += 1

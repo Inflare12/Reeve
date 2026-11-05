@@ -28,7 +28,10 @@ func _initialize() -> void:
 		if label.text.contains("Estimated fuselage mass") and label.text.contains("Estimated fin set mass"):
 			found_mass = true
 	if not found_mass:
-		push_error("Workshop did not calculate an initial shell mass")
+		push_error("Workshop did not calculate initial fuselage and fin masses")
+		failures += 1
+	if instance.configuration.components.size() != 5:
+		push_error("Workshop did not create one fuselage and four fin component records")
 		failures += 1
 	instance.queue_free()
 	if failures == 0:

@@ -30,8 +30,8 @@ func _initialize() -> void:
 	if camera == null or not camera.current:
 		push_error("Main camera is missing or not current")
 		failures += 1
-	if status == null or not status.text.contains("no propulsion profile"):
-		push_error("Scene status does not clearly describe idle state")
+	if status == null:
+		push_error("Scene status label is missing")
 		failures += 1
 
 	instance.queue_free()

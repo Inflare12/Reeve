@@ -23,6 +23,7 @@ func _initialize() -> void:
 	failures += _check_wind_relative_telemetry()
 	failures += _check_mission_events()
 	failures += _check_quaternion_rigid_body_dynamics()
+	failures += _check_time_varying_wind()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -488,5 +489,49 @@ func _check_quaternion_rigid_body_dynamics() -> int:
 	invalid_state.mass_kg = 1.0
 	if invalid_controller.configure(invalid_state, {"dry_mass_kg": 1.0, "body_moment_nm": Vector3(1.0, 0.0, 0.0)}):
 		push_error("Controller accepted applied moment without a valid inertia tensor")
+		return 1
+	return 0
+
+func _check_time_varying_wind() -> int:
+	var config := {
+		"base_velocity_m_s": Vector3(5.0, 0.0, 0.0),
+		"gust_amplitude_m_s": Vector3(2.0, 0.0, 0.0),
+		"gust_frequency_hz": Vector3(0.25, 0.0, 0.0),
+		"phase_rad": Vector3.ZERO
+	}
+	if not ReeveWindModel.validate(config).is_empty():
+		push_error("Valid time-varying wind configuration was rejected")
+		return 1
+	var at_start := ReeveWindModel.sample(0.0, config)
+	var at_quarter := ReeveWindModel.sample(1.0, config)
+	var at_three_quarters := ReeveWindModel.sample(3.0, config)
+	if not bool(at_start.ok) or not bool(at_quarter.ok) or not bool(at_three_quarters.ok):
+		push_error("Time-varying wind sampling failed")
+		return 1
+	if absf(Vector3(at_start.velocity_m_s).x - 5.0) > 0.000001 or absf(Vector3(at_quarter.velocity_m_s).x - 7.0) > 0.000001 or absf(Vector3(at_three_quarters.velocity_m_s).x - 3.0) > 0.000001:
+		push_error("Wind gust sinusoid does not match its specified phase and frequency")
+		return 1
+	var invalid := config.duplicate(true)
+	invalid.gust_frequency_hz = Vector3(-0.1, 0.0, 0.0)
+	if ReeveWindModel.validate(invalid).is_empty():
+		push_error("Wind model accepted negative gust frequency")
+		return 1
+	var state := ReeveFlightState.new()
+	state.position_m.y = 100.0
+	state.mass_kg = 2.0
+	state.velocity_m_s = Vector3(10.0, 0.0, 0.0)
+	var controller := ReeveSimulationController.new()
+	var model := {
+		"dry_mass_kg": 2.0,
+		"drag_coefficient": 0.0,
+		"reference_area_m2": 0.0,
+		"wind_model": {"base_velocity_m_s": Vector3(10.0, 0.0, 0.0)}
+	}
+	if not controller.configure(state, model):
+		push_error("Controller rejected valid wind model")
+		return 1
+	controller.advance_frame(controller.fixed_dt_s)
+	if controller.telemetry.samples.is_empty() or float(controller.telemetry.samples[0].relative_air_speed_m_s) > 0.000001:
+		push_error("Controller did not pass sampled wind to physics telemetry")
 		return 1
 	return 0

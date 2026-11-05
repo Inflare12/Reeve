@@ -150,7 +150,7 @@ func _build_interface() -> void:
 	for control in [body_length, body_diameter, wall_thickness, fin_count, fin_span, fin_chord]:
 		control.value_changed.connect(_on_parameters_changed)
 	for mass_input in component_mass_inputs.values():
-		mass_input.value_changed.connect(_on_parameters_changed)
+		mass_input.value_changed.connect(_on_component_mass_changed)
 
 func _add_spinbox(parent: VBoxContainer, label_text: String, minimum: float, maximum: float, initial: float, step: float, decimals: int) -> SpinBox:
 	var label := Label.new()
@@ -168,9 +168,12 @@ func _add_spinbox(parent: VBoxContainer, label_text: String, minimum: float, max
 	return spin
 
 func _on_parameters_changed(_value: float = 0.0) -> void:
-	_update_model()
+	_update_model(true)
 
-func _update_model() -> void:
+func _on_component_mass_changed(_value: float = 0.0) -> void:
+	_update_model(false)
+
+func _update_model(rebuild_visuals: bool = true) -> void:
 	if body_length == null or rocket_visual == null:
 		return
 	var radius: float = body_diameter.value * 0.5
@@ -243,6 +246,8 @@ func _update_model() -> void:
 		var category_name: String = str(mass_categories[component_key])
 		component_list.add_item("%s — %.3f kg%s" % [category_name, entered_mass, "" if entered_mass > 0.0 else " (not included)"])
 
+	if not rebuild_visuals:
+		return
 	for child in rocket_visual.get_children():
 		rocket_visual.remove_child(child)
 		child.free()

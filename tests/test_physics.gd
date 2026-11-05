@@ -5,6 +5,7 @@ func _initialize() -> void:
 	var failures: int = 0
 	failures += _check_atmosphere()
 	failures += _check_atmosphere_domain()
+	failures += _check_atmosphere_modifiers()
 	failures += _check_gravity()
 	failures += _check_drag_opposes_motion()
 	failures += _check_mass_accounting()
@@ -618,5 +619,24 @@ func _check_analytic_free_fall() -> int:
 	# Semi-implicit Euler has a known O(dt) position offset; bound it explicitly.
 	if absf(state.position_m.y - expected_position) > 0.05:
 		push_error("Free-fall position error exceeded the documented semi-implicit Euler tolerance")
+		return 1
+	return 0
+
+func _check_atmosphere_modifiers() -> int:
+	var standard := ReeveAtmosphere.sample(1000.0)
+	var modified := ReeveAtmosphere.sample(1000.0, {"temperature_offset_k": 10.0, "pressure_scale": 1.1})
+	if not bool(modified.get("ok", false)):
+		push_error("Valid atmospheric temperature and pressure modifiers were rejected")
+		return 1
+	if absf(float(modified.temperature_k) - float(standard.temperature_k) - 10.0) > 0.000001 or absf(float(modified.pressure_pa) / float(standard.pressure_pa) - 1.1) > 0.000001:
+		push_error("Atmospheric temperature or pressure modifier was not applied")
+		return 1
+	var expected_density: float = float(modified.pressure_pa) / (ReeveConstants.AIR_GAS_CONSTANT * float(modified.temperature_k))
+	if absf(float(modified.density_kg_m3) - expected_density) > 0.000001:
+		push_error("Atmospheric density was not recomputed from modified pressure and temperature")
+		return 1
+	var invalid := ReeveAtmosphere.sample(1000.0, {"pressure_scale": 0.0})
+	if bool(invalid.get("ok", true)):
+		push_error("Atmosphere accepted a non-positive pressure scale")
 		return 1
 	return 0

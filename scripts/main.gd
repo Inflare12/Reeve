@@ -8,6 +8,7 @@ var simulation := ReeveSimulationController.new()
 var time_scale: float = 1.0
 var run_button: Button
 var time_scale_label: Label
+var telemetry_plots: Array[ReeveTelemetryPlot] = []
 
 func _ready() -> void:
 	camera.look_at(Vector3(0.0, 2.0, 0.0), Vector3.UP)
@@ -41,6 +42,7 @@ func _ready() -> void:
 	time_scale_label.name = "TimeScaleLabel"
 	$CanvasLayer/Panel/Info.add_child(time_scale_label)
 	_update_time_scale_label()
+	_build_telemetry_dashboard()
 
 	var slower_button := Button.new()
 	slower_button.name = "SlowerButton"
@@ -175,3 +177,38 @@ func _update_flight_display() -> void:
 		state.mass_kg,
 		state.time_s
 	]
+	_update_telemetry_plots()
+
+func _build_telemetry_dashboard() -> void:
+	var layer := $CanvasLayer
+	var panel := PanelContainer.new()
+	panel.name = "TelemetryPanel"
+	panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	panel.offset_left = -410.0
+	panel.offset_top = 20.0
+	panel.offset_right = -20.0
+	panel.offset_bottom = 620.0
+	layer.add_child(panel)
+	var column := VBoxContainer.new()
+	panel.add_child(column)
+	var heading := Label.new()
+	heading.text = "LIVE TELEMETRY"
+	heading.add_theme_font_size_override("font_size", 18)
+	column.add_child(heading)
+	var chart_specs := [
+		["AltitudePlot", "Altitude", "altitude_m", "m"],
+		["VelocityPlot", "Total velocity", "velocity_m_s", "m/s"],
+		["AccelerationPlot", "Acceleration", "acceleration_m_s2", "m/s²"],
+		["DynamicPressurePlot", "Dynamic pressure", "dynamic_pressure_pa", "Pa"],
+		["MassPlot", "Vehicle mass", "mass_kg", "kg"]
+	]
+	for spec in chart_specs:
+		var plot := ReeveTelemetryPlot.new()
+		plot.name = str(spec[0])
+		plot.configure(str(spec[1]), str(spec[2]), str(spec[3]))
+		column.add_child(plot)
+		telemetry_plots.append(plot)
+
+func _update_telemetry_plots() -> void:
+	for plot in telemetry_plots:
+		plot.set_samples(simulation.telemetry.samples)

@@ -63,8 +63,13 @@ func load_from_file(path: String) -> Error:
 	file.close()
 	if not parsed is Dictionary or int(parsed.get("schema_version", 0)) != 1:
 		return ERR_INVALID_DATA
+	var loaded_name: String = str(parsed.get("vehicle_name", "")).strip_edges()
+	var raw_components: Variant = parsed.get("components", null)
+	if loaded_name.is_empty() or not raw_components is Array:
+		return ERR_INVALID_DATA
 	var loaded: Array[ReeveRocketComponent] = []
-	for record in parsed.get("components", []):
+	var seen_ids: Dictionary = {}
+	for record in raw_components:
 		if not record is Dictionary:
 			return ERR_INVALID_DATA
 		var component := ReeveRocketComponent.new()
@@ -73,12 +78,18 @@ func load_from_file(path: String) -> Error:
 		component.category = str(record.get("category", "Structure"))
 		component.material_id = str(record.get("material_id", ""))
 		component.geometry_type = str(record.get("geometry_type", ""))
-		component.dimensions_m = record.get("dimensions_m", {})
+		var dimensions: Variant = record.get("dimensions_m", {})
+		if not dimensions is Dictionary or seen_ids.has(component.component_id):
+			return ERR_INVALID_DATA
+		component.dimensions_m = dimensions
 		component.user_mass_kg = float(record.get("mass_kg", 0.0))
 		if not component.validate().is_empty():
 			return ERR_INVALID_DATA
+		seen_ids[component.component_id] = true
 		loaded.append(component)
-	vehicle_name = str(parsed.get("vehicle_name", "REEVE Educational Vehicle"))
+	# Commit only after every record passes validation; a bad file cannot
+	# partially replace a valid in-memory vehicle.
+	vehicle_name = loaded_name
 	components = loaded
 	return OK
 

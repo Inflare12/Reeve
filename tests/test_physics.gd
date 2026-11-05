@@ -10,6 +10,7 @@ func _initialize() -> void:
 	failures += _check_fixed_step_controller()
 	failures += _check_component_mass()
 	failures += _check_configuration_rollup()
+	failures += _check_configuration_serialization()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -115,5 +116,34 @@ func _check_configuration_rollup() -> int:
 	var breakdown := configuration.get_mass_breakdown()
 	if int(breakdown.component_count) != 1 or absf(float(breakdown.total_mass_kg) - 1.25) > 0.000001:
 		push_error("Configuration mass roll-up failed")
+		return 1
+	return 0
+
+func _check_configuration_serialization() -> int:
+	var original := ReeveRocketConfiguration.new()
+	original.vehicle_name = "Serialization Test"
+	var component := ReeveRocketComponent.new()
+	component.component_id = "test_mass"
+	component.display_name = "Test mass"
+	component.geometry_type = "user_mass"
+	component.material_id = "aluminium_6061_t6"
+	component.user_mass_kg = 2.75
+	if not original.add_component(component):
+		push_error("Could not create serialization test component")
+		return 1
+	var path := "user://reeve_config_test.json"
+	var save_error := original.save_to_file(path)
+	if save_error != OK:
+		push_error("Configuration save failed: %s" % error_string(save_error))
+		return 1
+	var restored := ReeveRocketConfiguration.new()
+	var load_error := restored.load_from_file(path)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	if load_error != OK:
+		push_error("Configuration load failed: %s" % error_string(load_error))
+		return 1
+	var result := restored.get_mass_breakdown()
+	if restored.vehicle_name != "Serialization Test" or int(result.component_count) != 1 or absf(float(result.total_mass_kg) - 2.75) > 0.000001:
+		push_error("Configuration serialization round trip changed data")
 		return 1
 	return 0

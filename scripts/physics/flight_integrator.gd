@@ -37,7 +37,8 @@ static func step(
 	if dt_s <= 0.0 or dt_s > 0.1 or not is_finite(dt_s) or not state.is_valid():
 		return false
 
-	var atmosphere: Dictionary = ReeveAtmosphere.sample(state.position_m.y)
+	var atmosphere_conditions: Dictionary = model.get("atmosphere_conditions", {})
+	var atmosphere: Dictionary = ReeveAtmosphere.sample(state.position_m.y, atmosphere_conditions)
 	if not bool(atmosphere.get("ok", false)):
 		return false
 	var dry_mass_kg: float = maxf(float(model.get("dry_mass_kg", 0.001)), 0.001)

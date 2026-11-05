@@ -160,6 +160,29 @@ func _validate_model(initial_state: ReeveFlightState, supplied_model: Dictionary
 		var wind_error: String = ReeveWindModel.validate(wind_configuration)
 		if not wind_error.is_empty():
 			return "Invalid wind model: %s" % wind_error
+	if supplied_model.has("aerodynamic_model"):
+		var aerodynamic_configuration: Variant = supplied_model.get("aerodynamic_model")
+		if not aerodynamic_configuration is Dictionary:
+			return "Aerodynamic model must be a Dictionary."
+		var raw_curve: Variant = aerodynamic_configuration.get("drag_curve", [])
+		if not raw_curve is Array:
+			return "Aerodynamic drag curve must be an Array."
+		var drag_curve: Array[Dictionary] = []
+		for point in raw_curve:
+			if not point is Dictionary:
+				return "Every aerodynamic drag-curve point must be a Dictionary."
+			drag_curve.append(point)
+		if drag_curve.size() < 2:
+			return "Aerodynamic drag curve requires at least two supplied points."
+		var curve_check := ReeveAerodynamics.interpolate_drag_coefficient(float(drag_curve[0].get("mach", -1.0)), drag_curve)
+		if not bool(curve_check.get("ok", false)):
+			return "Invalid aerodynamic drag curve: %s" % str(curve_check.get("error", "unknown error"))
+		for key in ["reference_area_m2", "characteristic_length_m", "lift_slope_per_rad"]:
+			var value: float = float(aerodynamic_configuration.get(key, 0.0))
+			if not is_finite(value):
+				return "Aerodynamic %s must be finite." % key
+		if float(aerodynamic_configuration.get("reference_area_m2", 0.0)) <= 0.0 or float(aerodynamic_configuration.get("characteristic_length_m", 0.0)) <= 0.0:
+			return "Aerodynamic reference area and characteristic length must be positive."
 	var recovery_configuration: Variant = supplied_model.get("recovery", {})
 	if not recovery_configuration is Dictionary:
 		return "Recovery configuration must be a Dictionary."

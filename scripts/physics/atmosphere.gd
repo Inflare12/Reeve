@@ -3,7 +3,7 @@ extends RefCounted
 ## Simplified ISA-like dry-air model from -500 m to 20 km geopotential altitude.
 ## This is not a full US Standard Atmosphere 1976 implementation.
 
-static func sample(altitude_m: float) -> Dictionary:
+static func sample(altitude_m: float, conditions: Dictionary = {}) -> Dictionary:
 	if not is_finite(altitude_m):
 		return {"ok": false, "error": "Altitude must be finite."}
 	if altitude_m < -500.0 or altitude_m > ReeveConstants.STRATOSPHERE_UPPER_LIMIT_M:
@@ -28,6 +28,14 @@ static func sample(altitude_m: float) -> Dictionary:
 			/ (ReeveConstants.AIR_GAS_CONSTANT * temperature_k)
 		)
 
+	var temperature_offset_k: float = float(conditions.get("temperature_offset_k", 0.0))
+	var pressure_scale: float = float(conditions.get("pressure_scale", 1.0))
+	if not is_finite(temperature_offset_k) or not is_finite(pressure_scale) or pressure_scale <= 0.0:
+		return {"ok": false, "error": "Atmosphere temperature offset must be finite and pressure scale finite and positive."}
+	temperature_k += temperature_offset_k
+	pressure_pa *= pressure_scale
+	if temperature_k <= 0.0 or pressure_pa <= 0.0:
+		return {"ok": false, "error": "Atmosphere conditions produce non-positive absolute temperature or pressure."}
 	var density_kg_m3: float = pressure_pa / (ReeveConstants.AIR_GAS_CONSTANT * temperature_k)
 	var sutherland_mu0: float = 1.716e-5
 	var sutherland_t0: float = 273.15
@@ -37,8 +45,10 @@ static func sample(altitude_m: float) -> Dictionary:
 
 	return {
 		"ok": true,
-		"model": "REEVE simplified dry-air ISA-like profile",
+		"model": "REEVE simplified dry-air ISA-like profile with optional user offsets",
 		"altitude_m": h,
+		"temperature_offset_k": temperature_offset_k,
+		"pressure_scale": pressure_scale,
 		"temperature_k": temperature_k,
 		"pressure_pa": pressure_pa,
 		"density_kg_m3": density_kg_m3,

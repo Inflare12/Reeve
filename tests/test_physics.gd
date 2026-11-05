@@ -237,6 +237,29 @@ func _check_attitude_coupled_aerodynamics() -> int:
 	if invalid_controller.configure(state, {"dry_mass_kg": 1000.0, "aerodynamic_model": {"drag_curve": [], "reference_area_m2": 1.0, "characteristic_length_m": 1.0}}):
 		push_error("Controller accepted an aerodynamic model without a supplied coefficient curve")
 		return 1
+	var aligned_state := ReeveFlightState.new()
+	aligned_state.position_m.y = 100.0
+	aligned_state.velocity_m_s = Vector3(0.0, 0.0, 100.0)
+	aligned_state.mass_kg = 1000.0
+	aligned_state.orientation = Quaternion(Vector3.RIGHT, PI * 0.5)
+	var aligned_controller := ReeveSimulationController.new()
+	if not aligned_controller.configure(aligned_state, model) or not aligned_controller.step_once():
+		push_error("Aligned-body aerodynamic case failed")
+		return 1
+	if absf(aligned_controller.state.acceleration_m_s2.y + ReeveConstants.STANDARD_GRAVITY) > 0.02:
+		push_error("Aligned body and airflow should have near-zero angle of attack and no lift")
+		return 1
+	var out_of_curve_state := ReeveFlightState.new()
+	out_of_curve_state.position_m.y = 100.0
+	out_of_curve_state.velocity_m_s = Vector3(0.0, 0.0, 500.0)
+	out_of_curve_state.mass_kg = 1000.0
+	var out_of_curve_controller := ReeveSimulationController.new()
+	if not out_of_curve_controller.configure(out_of_curve_state, model):
+		push_error("Controller rejected a valid coefficient curve before its Mach-domain check")
+		return 1
+	if out_of_curve_controller.step_once() or out_of_curve_controller.state.time_s != 0.0:
+		push_error("Aerodynamic model extrapolated outside supplied Mach data or mutated state on rejection")
+		return 1
 	return 0
 
 func _check_ground_contact_event() -> int:

@@ -15,10 +15,11 @@ static func validate(configuration: Dictionary) -> String:
 		return "Canopy drag coefficient must be finite and positive."
 	return ""
 
-static func is_deployed(altitude_m: float, configuration: Dictionary) -> bool:
-	if not validate(configuration).is_empty() or not is_finite(altitude_m):
+static func is_deployed(altitude_m: float, vertical_velocity_m_s: float, configuration: Dictionary) -> bool:
+	if not validate(configuration).is_empty() or not is_finite(altitude_m) or not is_finite(vertical_velocity_m_s):
 		return false
-	return altitude_m <= float(configuration.deployment_altitude_m)
+	# Deploy only after the vehicle has crossed the threshold while descending.
+	return altitude_m <= float(configuration.deployment_altitude_m) and vertical_velocity_m_s < 0.0
 
 static func calculate_acceleration(
 	mass_kg: float,

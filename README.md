@@ -10,7 +10,7 @@ This repository was empty when the initial project scaffold was created. The fir
 
 Implemented foundations:
 - Component records for cylindrical shells, rectangular plates, and user-entered masses.
-- Interactive 3D Rocket Workshop with editable fuselage length, diameter, wall thickness, fin count/span/chord, material selection, separate conceptual subassembly visuals and user-entered masses for tanks, engine, payload, avionics, recovery, sensors and supports.
+- Interactive 3D Rocket Workshop with editable fuselage length, diameter, wall thickness, fin count/span/chord, material selection, separate conceptual subassembly visuals, selectable component inspection and user-entered masses for tanks, engine, payload, avionics, recovery, sensors and supports.
 - Conceptual fin meshes and plate-mass estimates included in the vehicle mass roll-up.
 - Vehicle configuration save/load to the Godot user-data directory (`user://reeve_vehicle.json`).
 - Initial material catalogue with explicitly approximate reference properties.
@@ -28,7 +28,7 @@ Implemented foundations:
 - Telemetry samples with CSV and unit-labelled JSON export; Mach and dynamic pressure are computed from air-relative velocity including the configured wind vector. JSON exports also include state-triggered mission events such as apogee, descent and ground contact.
 - Basic analytical checks and model documentation.
 
-Not yet implemented: full coupled 6-DOF aerodynamics and stability derivatives, validated thermal/structural analysis, full component hierarchy and workshop-to-flight handoff, advanced weather, or a professional telemetry plotting UI. These must not be inferred from the current scaffold.
+Not yet implemented: full coupled 6-DOF aerodynamics and stability derivatives, validated thermal/structural analysis, component-specific geometry editing and workshop-to-flight handoff, advanced weather, or a professional telemetry plotting UI. These must not be inferred from the current scaffold.
 
 ## Requirements
 

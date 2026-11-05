@@ -13,6 +13,7 @@ func _initialize() -> void:
 	failures += _check_configuration_serialization()
 	failures += _check_aerodynamic_force_model()
 	failures += _check_ground_contact_event()
+	failures += _check_supplied_propulsion_profile()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -203,5 +204,38 @@ func _check_ground_contact_event() -> int:
 	controller.advance_frame(1.0 / 60.0)
 	if not controller.ground_contact or controller.running or absf(controller.state.position_m.y) > 0.000001 or controller.state.velocity_m_s.length() > 0.000001:
 		push_error("Ground-contact event did not stop and settle the vehicle state")
+		return 1
+	return 0
+
+func _check_supplied_propulsion_profile() -> int:
+	var profile := ReevePropulsionProfile.new()
+	profile.profile_name = "Synthetic unit-test curve"
+	profile.data_quality = "synthetic_test"
+	profile.source_description = "Test-only values; not engine performance data."
+	profile.points = [
+		{"time_s": 0.0, "thrust_n": 0.0, "mass_flow_kg_s": 0.0},
+		{"time_s": 1.0, "thrust_n": 100.0, "mass_flow_kg_s": 0.2},
+		{"time_s": 2.0, "thrust_n": 0.0, "mass_flow_kg_s": 0.0}
+	]
+	if not profile.validate().is_empty():
+		push_error("Valid supplied propulsion curve was rejected")
+		return 1
+	var middle := profile.sample(0.5)
+	if not bool(middle.ok) or absf(float(middle.thrust_n) - 50.0) > 0.000001 or absf(float(middle.mass_flow_kg_s) - 0.1) > 0.000001:
+		push_error("Supplied propulsion curve interpolation failed")
+		return 1
+	if absf(profile.total_impulse_ns() - 100.0) > 0.000001 or absf(profile.integrated_propellant_mass_kg() - 0.2) > 0.000001:
+		push_error("Supplied propulsion curve integration failed")
+		return 1
+	var invalid := ReevePropulsionProfile.new()
+	invalid.profile_name = "Invalid"
+	invalid.data_quality = "supplied"
+	invalid.source_description = "Bad time ordering"
+	invalid.points = [
+		{"time_s": 1.0, "thrust_n": 0.0, "mass_flow_kg_s": 0.0},
+		{"time_s": 0.5, "thrust_n": 1.0, "mass_flow_kg_s": 0.1}
+	]
+	if invalid.validate().is_empty():
+		push_error("Non-monotonic propulsion curve was accepted")
 		return 1
 	return 0

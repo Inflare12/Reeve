@@ -10,6 +10,7 @@ This repository was empty when the initial project scaffold was created. The fir
 
 Implemented foundations:
 - Component records for cylindrical shells, rectangular plates, and user-entered masses.
+- Interactive 3D Rocket Workshop with editable fuselage length, diameter, wall thickness and material selection.
 - Initial material catalogue with explicitly approximate reference properties.
 - Vehicle component collection, duplicate-ID checks, and mass breakdown by category.
 - JSON vehicle configuration save/load support.
@@ -48,11 +49,13 @@ If the executable is named godot4, substitute that command. A successful parser 
 
     project.godot
     scenes/main/main.tscn
+    scenes/workshop/workshop.tscn
     scripts/main.gd
     scripts/physics/constants.gd
     scripts/materials/material_catalog.gd
     scripts/workshop/rocket_component.gd
     scripts/workshop/rocket_configuration.gd
+    scripts/workshop/workshop_scene.gd
     data/materials/materials.json
     scripts/physics/atmosphere.gd
     scripts/physics/flight_state.gd

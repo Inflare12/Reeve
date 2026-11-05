@@ -13,6 +13,7 @@ var wind_x_input: SpinBox
 var wind_z_input: SpinBox
 var temperature_offset_input: SpinBox
 var pressure_scale_input: SpinBox
+var workshop_configuration: ReeveRocketConfiguration
 
 func _ready() -> void:
 	camera.look_at(Vector3(0.0, 2.0, 0.0), Vector3.UP)
@@ -32,6 +33,12 @@ func _ready() -> void:
 	gravity_button.text = "Run Gravity-Only Drop Test"
 	gravity_button.pressed.connect(_start_gravity_drop)
 	$CanvasLayer/Panel/Info.add_child(gravity_button)
+
+	var load_workshop_button := Button.new()
+	load_workshop_button.name = "LoadWorkshopVehicleButton"
+	load_workshop_button.text = "Load Workshop Vehicle"
+	load_workshop_button.pressed.connect(_load_workshop_vehicle)
+	$CanvasLayer/Panel/Info.add_child(load_workshop_button)
 
 	var reset_button := Button.new()
 	reset_button.name = "ResetDemoButton"
@@ -120,6 +127,23 @@ func _add_environment_spinbox(label_text: String, minimum: float, maximum: float
 	$CanvasLayer/Panel/Info.add_child(container)
 	return spin
 
+func _load_workshop_vehicle() -> void:
+	var loaded := ReeveRocketConfiguration.new()
+	var load_error: Error = loaded.load_from_file("user://reeve_vehicle.json")
+	if load_error != OK:
+		status_label.text = "Workshop vehicle load failed: %s" % error_string(load_error)
+		return
+	var handoff: Dictionary = loaded.get_flight_handoff()
+	if not bool(handoff.get("ok", false)):
+		status_label.text = "Workshop handoff rejected: %s" % str(handoff.get("error", "unknown error"))
+		return
+	workshop_configuration = loaded
+	status_label.text = "LOADED — %s | %.3f kg | frontal area %.4f m². Cd and propulsion remain unspecified." % [
+		str(handoff.vehicle_name),
+		float(handoff.total_mass_kg),
+		float(handoff.frontal_reference_area_m2)
+	]
+
 func _toggle_pause() -> void:
 	if simulation.state == null:
 		status_label.text = "Start a demonstration before pausing."
@@ -160,16 +184,28 @@ func _export_json() -> void:
 	status_label.text = "JSON exported to user://reeve_telemetry.json" if result == OK else "JSON export failed: %s" % error_string(result)
 
 func _start_gravity_drop() -> void:
+	var initial_mass_kg: float = 25.0
+	var reference_area_m2: float = PI * 0.28 * 0.28
+	var drag_coefficient: float = 0.5
+	if workshop_configuration != null:
+		var handoff: Dictionary = workshop_configuration.get_flight_handoff()
+		if not bool(handoff.get("ok", false)):
+			status_label.text = "Workshop handoff became invalid: %s" % str(handoff.get("error", "unknown error"))
+			return
+		initial_mass_kg = float(handoff.total_mass_kg)
+		reference_area_m2 = float(handoff.frontal_reference_area_m2)
+		# Unknown vehicle Cd must not be fabricated; use a drag-free mass-transfer test.
+		drag_coefficient = 0.0
 	var initial_state := ReeveFlightState.new()
 	initial_state.position_m = Vector3(0.0, 20.0, 0.0)
-	initial_state.mass_kg = 25.0
+	initial_state.mass_kg = initial_mass_kg
 	initial_state.propellant_remaining_kg = 0.0
 	var model := {
 		"thrust_n": 0.0,
 		"mass_flow_kg_s": 0.0,
-		"dry_mass_kg": 25.0,
-		"drag_coefficient": 0.5,
-		"reference_area_m2": PI * 0.28 * 0.28,
+		"dry_mass_kg": initial_mass_kg,
+		"drag_coefficient": drag_coefficient,
+		"reference_area_m2": reference_area_m2,
 		"ground_altitude_m": 0.0,
 		"atmosphere_conditions": {
 			"temperature_offset_k": temperature_offset_input.value,
@@ -180,7 +216,7 @@ func _start_gravity_drop() -> void:
 	if not simulation.configure(initial_state, model, wind_velocity_m_s):
 		status_label.text = "Could not start test: %s" % simulation.last_error
 		return
-	status_label.text = "RUNNING — gravity-only drop test"
+	status_label.text = "RUNNING — gravity-only drop test" if workshop_configuration == null else "RUNNING — workshop mass-transfer check; drag disabled because Cd is unknown"
 	_update_flight_display()
 
 func _reset_demonstration() -> void:

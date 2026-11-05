@@ -92,6 +92,17 @@ func get_flight_handoff() -> Dictionary:
 	if fuselage == null:
 		return {"ok": false, "error": "A valid main_fuselage cylindrical shell is required for flight handoff."}
 	var radius_m: float = float(fuselage.dimensions_m.get("outer_radius", 0.0))
+	var fin_count: int = 0
+	var fin_span_m: float = 0.0
+	var fin_chord_m: float = 0.0
+	var fin_thickness_m: float = 0.0
+	for component in components:
+		if str(component.component_id).begins_with("fin_") and component.geometry_type == "rectangular_plate":
+			fin_count += 1
+			if fin_count == 1:
+				fin_span_m = float(component.dimensions_m.get("width", 0.0))
+				fin_chord_m = float(component.dimensions_m.get("length", 0.0))
+				fin_thickness_m = float(component.dimensions_m.get("thickness", 0.0))
 	var total_mass_kg: float = float(breakdown.total_mass_kg)
 	if not is_finite(radius_m) or radius_m <= 0.0 or not is_finite(total_mass_kg) or total_mass_kg <= 0.0:
 		return {"ok": false, "error": "Vehicle mass and fuselage geometry must be positive and finite."}
@@ -102,6 +113,10 @@ func get_flight_handoff() -> Dictionary:
 		"fuselage_length_m": float(fuselage.dimensions_m.get("length", 0.0)),
 		"fuselage_diameter_m": radius_m * 2.0,
 		"frontal_reference_area_m2": PI * radius_m * radius_m,
+		"fin_count": fin_count,
+		"fin_span_m": fin_span_m,
+		"fin_chord_m": fin_chord_m,
+		"fin_thickness_m": fin_thickness_m,
 		"drag_coefficient_supplied": false,
 		"propulsion_profile_supplied": false,
 		"note": "Mass and reference geometry transferred. No drag coefficient or propulsion performance is inferred."

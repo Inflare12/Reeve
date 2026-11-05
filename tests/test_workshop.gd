@@ -11,8 +11,8 @@ func _initialize() -> void:
 	root.add_child(instance)
 	await process_frame
 	var failures := 0
-	if instance.get_node_or_null("Camera3D") != null:
-		push_error("Workshop should own a dynamically created camera, not a duplicated fixed node")
+	if instance.get_node_or_null("WorkshopCamera") == null:
+		push_error("Workshop camera is missing")
 		failures += 1
 	var spinboxes := instance.find_children("*", "SpinBox", true, false)
 	if spinboxes.size() != 14:
@@ -22,24 +22,15 @@ func _initialize() -> void:
 	if material_options.size() != 1:
 		push_error("Workshop material selector is missing")
 		failures += 1
-	var component_list := instance.find_children("*", "ItemList", true, false)
-	if component_list.size() != 1:
+	var component_lists := instance.find_children("*", "ItemList", true, false)
+	if component_lists.size() != 1:
 		push_error("Workshop component hierarchy list is missing")
 		failures += 1
 	var visuals := ["FuelTankVisual", "OxidizerTankVisual", "EngineVisual", "NozzleVisual", "PayloadVisual", "AvionicsVisual", "RecoveryVisual", "ExternalSensorVisual", "StructuralSupportVisual"]
 	for visual_name in visuals:
-		if instance.get_node_or_null("FuelTankVisual") == null and visual_name == "FuelTankVisual":
-			push_error("Workshop tank visual is missing")
-			failures += 1
-		elif instance.get_node_or_null(visual_name) == null:
+		if instance.get_node_or_null("RocketVisual/" + visual_name) == null:
 			push_error("Workshop subassembly visual is missing: %s" % visual_name)
 			failures += 1
-	var mass_inputs: Dictionary = instance.get("component_mass_inputs")
-	mass_inputs["payload"].value = 1.25
-	instance.call("_update_model")
-	if absf(float(instance.configuration.get_mass_breakdown().total_mass_kg) - (float(instance.configuration.get_mass_breakdown().total_mass_kg))) > 0.000001 or instance.configuration.components.size() != 6:
-		push_error("Workshop did not include user-entered payload mass in the bill of materials")
-		failures += 1
 	var labels := instance.find_children("*", "Label", true, false)
 	var found_mass := false
 	for label in labels:
@@ -50,6 +41,14 @@ func _initialize() -> void:
 		failures += 1
 	if instance.configuration.components.size() != 5:
 		push_error("Workshop did not create one fuselage and four fin component records")
+		failures += 1
+	var baseline_mass: float = float(instance.configuration.get_mass_breakdown().total_mass_kg)
+	var mass_inputs: Dictionary = instance.get("component_mass_inputs")
+	mass_inputs["payload"].value = 1.25
+	instance.call("_update_model")
+	var updated_mass: float = float(instance.configuration.get_mass_breakdown().total_mass_kg)
+	if instance.configuration.components.size() != 6 or absf(updated_mass - baseline_mass - 1.25) > 0.000001:
+		push_error("Workshop did not include user-entered payload mass in the bill of materials")
 		failures += 1
 	instance.queue_free()
 	if failures == 0:

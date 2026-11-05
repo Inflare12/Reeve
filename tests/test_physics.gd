@@ -19,6 +19,7 @@ func _initialize() -> void:
 	failures += _check_supplied_propulsion_profile()
 	failures += _check_profile_drives_flight()
 	failures += _check_telemetry_json_export()
+	failures += _check_recovery_model()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -355,5 +356,34 @@ func _check_controller_input_validation() -> int:
 	controller.advance_frame(0.01, NAN)
 	if controller.running or not controller.last_error.contains("time scale"):
 		push_error("Controller did not stop on non-finite time scale")
+		return 1
+	return 0
+
+func _check_recovery_model() -> int:
+	var config := {
+		"deployment_altitude_m": 100.0,
+		"canopy_area_m2": 8.0,
+		"drag_coefficient": 1.5
+	}
+	if not ReeveRecoveryModel.validate(config).is_empty():
+		push_error("Valid educational recovery parameters were rejected")
+		return 1
+	if ReeveRecoveryModel.is_deployed(101.0, config) or not ReeveRecoveryModel.is_deployed(100.0, config):
+		push_error("Recovery deployment altitude condition is incorrect")
+		return 1
+	var result := ReeveRecoveryModel.calculate_acceleration(10.0, 1.2, Vector3.DOWN * 10.0, 8.0, 1.5)
+	if not bool(result.get("ok", false)) or Vector3(result.drag_force_n).y <= 0.0:
+		push_error("Parachute drag did not oppose downward relative airflow")
+		return 1
+	var expected_terminal := sqrt(2.0 * 10.0 * ReeveConstants.STANDARD_GRAVITY / (1.2 * 1.5 * 8.0))
+	if absf(float(result.terminal_descent_speed_m_s) - expected_terminal) > 0.000001:
+		push_error("Parachute terminal-speed estimate is inconsistent with the drag model")
+		return 1
+	var invalid_controller := ReeveSimulationController.new()
+	var state := ReeveFlightState.new()
+	state.position_m.y = 200.0
+	state.mass_kg = 10.0
+	if invalid_controller.configure(state, {"dry_mass_kg": 10.0, "recovery": {"deployment_altitude_m": -1.0, "canopy_area_m2": 8.0, "drag_coefficient": 1.5}}):
+		push_error("Controller accepted invalid recovery configuration")
 		return 1
 	return 0

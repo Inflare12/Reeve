@@ -32,7 +32,7 @@ func _ready() -> void:
 	pressure_scale_input.name = "PressureScaleInput"
 	camera_mode_selector = OptionButton.new()
 	camera_mode_selector.name = "CameraModeSelector"
-	for camera_mode_name in ["External Chase", "Side Observation", "Ground Observation", "Rocket Follow"]:
+	for camera_mode_name in ["External Chase", "Side Observation", "Ground Observation", "Rocket Follow", "Free Camera", "Engineering Inspection"]:
 		camera_mode_selector.add_item(camera_mode_name)
 	camera_mode_selector.select(0)
 	camera_mode_selector.item_selected.connect(_on_camera_mode_selected)
@@ -210,7 +210,33 @@ func _update_camera_for_state(target_position: Vector3) -> void:
 			camera.position = Vector3(22.0, 5.0, 22.0)
 		3:
 			camera.position = target_position + Vector3(0.0, 2.5, 7.0)
+		4:
+			return
+		5:
+			camera.position = target_position + Vector3(2.5, 1.5, 5.0)
 	camera.look_at(target_position + Vector3.UP * 2.0, Vector3.UP)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if camera_mode != 4 or not event is InputEventKey or not event.pressed or event.echo:
+		return
+	var movement := Vector3.ZERO
+	match event.keycode:
+		KEY_W:
+			movement.z -= 1.0
+		KEY_S:
+			movement.z += 1.0
+		KEY_A:
+			movement.x -= 1.0
+		KEY_D:
+			movement.x += 1.0
+		KEY_Q:
+			movement.y -= 1.0
+		KEY_E:
+			movement.y += 1.0
+		_:
+			return
+	var move_scale: float = 5.0 if event.shift_pressed else 1.0
+	camera.translate_object_local(movement.normalized() * move_scale)
 
 func _toggle_pause() -> void:
 	if simulation.state == null:
@@ -290,6 +316,9 @@ func _start_gravity_drop() -> void:
 func _reset_demonstration() -> void:
 	simulation.reset()
 	$RocketVisual.position = Vector3.ZERO
+	camera_mode = 0
+	if camera_mode_selector != null:
+		camera_mode_selector.select(0)
 	_update_camera_for_state(Vector3.ZERO)
 	status_label.text = "READY — no propulsion profile loaded. No flight has been simulated."
 	scope_label.text = "3-DOF point-mass physics foundation"

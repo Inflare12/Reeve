@@ -47,6 +47,7 @@ func configure(
 	fixed_dt_s = step_s
 	accumulator_s = 0.0
 	telemetry.clear()
+	telemetry.record_event("simulation_start", state)
 	running = true
 	ground_contact = false
 	last_error = ""
@@ -75,9 +76,23 @@ func advance_frame(frame_delta_s: float, time_scale: float = 1.0) -> int:
 func step_once() -> bool:
 	if state == null or not state.is_valid() or ground_contact:
 		return false
+	var previous_vertical_velocity_m_s: float = state.velocity_m_s.y
+	var previous_thrust_n: float = state.applied_thrust_n
+	var recovery_configuration: Dictionary = model.get("recovery", {})
+	var recovery_was_deployed: bool = not recovery_configuration.is_empty() and ReeveRecoveryModel.is_deployed(state.position_m.y, state.velocity_m_s.y, recovery_configuration)
 	if not ReeveFlightIntegrator.step(state, fixed_dt_s, model, wind_velocity_m_s):
 		last_error = "Physics step rejected invalid state or timestep."
 		return false
+	if previous_thrust_n <= 0.0 and state.applied_thrust_n > 0.0:
+		telemetry.record_event("powered_flight_start", state, {"thrust_n": state.applied_thrust_n})
+	elif previous_thrust_n > 0.0 and state.applied_thrust_n <= 0.0:
+		telemetry.record_event("engine_cutoff", state)
+	if previous_vertical_velocity_m_s > 0.0 and state.velocity_m_s.y <= 0.0:
+		telemetry.record_event("apogee", state)
+		telemetry.record_event("descent_start", state)
+	var recovery_is_deployed: bool = not recovery_configuration.is_empty() and ReeveRecoveryModel.is_deployed(state.position_m.y, state.velocity_m_s.y, recovery_configuration)
+	if not recovery_was_deployed and recovery_is_deployed:
+		telemetry.record_event("recovery_deployment", state, recovery_configuration)
 	var ground_altitude_m: float = float(model.get("ground_altitude_m", -INF))
 	if state.position_m.y <= ground_altitude_m:
 		state.position_m.y = ground_altitude_m
@@ -85,6 +100,7 @@ func step_once() -> bool:
 		state.acceleration_m_s2 = Vector3.ZERO
 		ground_contact = true
 		running = false
+		telemetry.record_event("ground_contact", state)
 	var atmosphere := ReeveAtmosphere.sample(state.position_m.y)
 	if not bool(atmosphere.get("ok", false)):
 		last_error = "Telemetry atmosphere sample is outside the supported model domain."

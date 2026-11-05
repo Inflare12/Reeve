@@ -9,6 +9,7 @@ func _initialize() -> void:
 	failures += _check_drag_opposes_motion()
 	failures += _check_mass_accounting()
 	failures += _check_fixed_step_controller()
+	failures += _check_controller_input_validation()
 	failures += _check_component_mass()
 	failures += _check_invalid_component_dimensions()
 	failures += _check_configuration_rollup()
@@ -333,5 +334,26 @@ func _check_invalid_component_dimensions() -> int:
 	component.dimensions_m = {"outer_radius": NAN, "wall_thickness": 0.001, "length": 1.0}
 	if component.validate().is_empty() or component.calculate_mass_kg() >= 0.0:
 		push_error("Non-finite geometry produced a component mass")
+		return 1
+	return 0
+
+func _check_controller_input_validation() -> int:
+	var state := ReeveFlightState.new()
+	state.mass_kg = 10.0
+	state.propellant_remaining_kg = 3.0
+	var controller := ReeveSimulationController.new()
+	if controller.configure(state, {"dry_mass_kg": 8.0}):
+		push_error("Controller accepted propellant mass greater than wet-minus-dry mass")
+		return 1
+	state.propellant_remaining_kg = 2.0
+	if controller.configure(state, {"dry_mass_kg": 8.0}, Vector3(NAN, 0.0, 0.0)):
+		push_error("Controller accepted non-finite wind")
+		return 1
+	if not controller.configure(state, {"dry_mass_kg": 8.0}):
+		push_error("Controller rejected valid dry/propellant mass")
+		return 1
+	controller.advance_frame(0.01, NAN)
+	if controller.running or not controller.last_error.contains("time scale"):
+		push_error("Controller did not stop on non-finite time scale")
 		return 1
 	return 0

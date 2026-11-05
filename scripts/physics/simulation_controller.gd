@@ -19,6 +19,9 @@ func configure(
 	wind_m_s: Vector3 = Vector3.ZERO,
 	step_s: float = 1.0 / 120.0
 ) -> bool:
+	# A failed reconfiguration must never leave an older run advancing silently.
+	running = false
+	accumulator_s = 0.0
 	if initial_state == null or not initial_state.is_valid():
 		last_error = "Initial flight state is invalid."
 		return false

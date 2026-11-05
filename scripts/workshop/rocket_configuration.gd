@@ -81,3 +81,28 @@ func load_from_file(path: String) -> Error:
 	vehicle_name = str(parsed.get("vehicle_name", "REEVE Educational Vehicle"))
 	components = loaded
 	return OK
+
+func get_flight_handoff() -> Dictionary:
+	var breakdown: Dictionary = get_mass_breakdown()
+	var fuselage: ReeveRocketComponent = null
+	for component in components:
+		if component.component_id == "main_fuselage" and component.geometry_type == "cylinder_shell":
+			fuselage = component
+			break
+	if fuselage == null:
+		return {"ok": false, "error": "A valid main_fuselage cylindrical shell is required for flight handoff."}
+	var radius_m: float = float(fuselage.dimensions_m.get("outer_radius", 0.0))
+	var total_mass_kg: float = float(breakdown.total_mass_kg)
+	if not is_finite(radius_m) or radius_m <= 0.0 or not is_finite(total_mass_kg) or total_mass_kg <= 0.0:
+		return {"ok": false, "error": "Vehicle mass and fuselage geometry must be positive and finite."}
+	return {
+		"ok": true,
+		"vehicle_name": vehicle_name,
+		"total_mass_kg": total_mass_kg,
+		"fuselage_length_m": float(fuselage.dimensions_m.get("length", 0.0)),
+		"fuselage_diameter_m": radius_m * 2.0,
+		"frontal_reference_area_m2": PI * radius_m * radius_m,
+		"drag_coefficient_supplied": false,
+		"propulsion_profile_supplied": false,
+		"note": "Mass and reference geometry transferred. No drag coefficient or propulsion performance is inferred."
+	}

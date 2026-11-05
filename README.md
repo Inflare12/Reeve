@@ -6,7 +6,7 @@ REEVE is an educational, SI-unit, 3D rocket-flight simulation laboratory built w
 
 ## Current implementation status
 
-This repository was empty when the initial project scaffold was created. The first implementation milestone establishes the Godot project, a modular physics core, a minimal 3D scene, telemetry recording, and an initial validation suite.
+The current implementation is a modular educational simulator with a 3D workshop, a flight laboratory, SI-unit physics modules, telemetry, and automated headless validation. The feature list below describes implemented code; it does not imply that the models are flight-qualified.
 
 Implemented foundations:
 - Component records for cylindrical shells, rectangular plates, and user-entered masses.
@@ -35,7 +35,7 @@ Implemented foundations:
 - Live five-channel telemetry plots for altitude, velocity, acceleration, dynamic pressure and mass, driven by recorded simulation samples.
 - Basic analytical checks and model documentation.
 
-Not yet implemented: fin-resolved aerodynamic moments and stability derivatives, a complete validated 6-DOF aerodynamic model, validated thermal and structural analysis, pressure-vessel and buckling analysis, full component-specific geometry editing, advanced weather, multi-run history comparison and advanced telemetry plotting tools. Workshop-to-flight handoff currently transfers mass and frontal reference geometry; it deliberately does not infer unknown drag or propulsion data. These capabilities must not be inferred from the current scaffold.
+Not yet implemented: fin-resolved aerodynamic moments and stability derivatives, a complete validated 6-DOF aerodynamic model, pressure-vessel and buckling analysis, detailed geometry editing for every subassembly, advanced weather, multi-run history comparison and advanced telemetry analysis tools. Workshop-to-flight handoff transfers the current vehicle mass, fuselage dimensions and fin visual geometry; it deliberately does not infer unknown drag or propulsion data. Structural and thermal modules are bounded analytical estimates, not validated engineering qualification. These capabilities must not be inferred from the current implementation.
 
 ## Requirements
 

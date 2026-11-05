@@ -17,7 +17,8 @@ Implemented foundations:
 - Vehicle component collection, duplicate-ID checks, and mass breakdown by category.
 - JSON vehicle configuration save/load support.
 - SI-unit constants and conversion helpers.
-- A documented approximate lower-atmosphere model (troposphere and lower stratosphere), including Sutherland-law dynamic viscosity.
+- A documented approximate lower-atmosphere model (troposphere and lower stratosphere), including Sutherland-law dynamic viscosity and explicit out-of-domain rejection.
+- Optional deterministic three-axis sinusoidal wind/gust model sampled at every fixed physics step.
 - A coefficient-driven aerodynamic module calculating Mach, dynamic pressure, Reynolds number, drag and supplied-slope lift without inventing vehicle coefficients.
 - Validated external propulsion-curve reader with linear interpolation, impulse integration and explicit source-quality labels; the simulation controller can apply the supplied thrust and mass-flow samples to the flight model.
 - A translational and rotational rigid-body foundation with gravity, supplied thrust, quadratic drag, quaternion attitude, diagonal-inertia angular dynamics and body-frame thrust direction.
@@ -67,6 +68,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     scripts/workshop/workshop_scene.gd
     data/materials/materials.json
     scripts/physics/atmosphere.gd
+    scripts/physics/wind_model.gd
     scripts/aerodynamics/aerodynamics.gd
     scripts/propulsion/propulsion_profile.gd
     scripts/recovery/recovery_model.gd
@@ -82,6 +84,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     docs/recovery_model.md
     docs/rotational_dynamics.md
     docs/workshop_components.md
+    docs/wind_model.md
 
 ## Model limitations
 

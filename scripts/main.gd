@@ -11,6 +11,8 @@ var time_scale_label: Label
 var telemetry_plots: Array[ReeveTelemetryPlot] = []
 var wind_x_input: SpinBox
 var wind_z_input: SpinBox
+var temperature_offset_input: SpinBox
+var pressure_scale_input: SpinBox
 
 func _ready() -> void:
 	camera.look_at(Vector3(0.0, 2.0, 0.0), Vector3.UP)
@@ -20,6 +22,10 @@ func _ready() -> void:
 	wind_x_input.name = "WindXInput"
 	wind_z_input = _add_environment_spinbox("Wind Z velocity (m/s)", -100.0, 100.0, 0.0, 0.5)
 	wind_z_input.name = "WindZInput"
+	temperature_offset_input = _add_environment_spinbox("Temperature offset (K)", -50.0, 50.0, 0.0, 1.0)
+	temperature_offset_input.name = "TemperatureOffsetInput"
+	pressure_scale_input = _add_environment_spinbox("Pressure scale", 0.5, 1.5, 1.0, 0.01)
+	pressure_scale_input.name = "PressureScaleInput"
 
 	var gravity_button := Button.new()
 	gravity_button.name = "GravityDropButton"
@@ -164,7 +170,11 @@ func _start_gravity_drop() -> void:
 		"dry_mass_kg": 25.0,
 		"drag_coefficient": 0.5,
 		"reference_area_m2": PI * 0.28 * 0.28,
-		"ground_altitude_m": 0.0
+		"ground_altitude_m": 0.0,
+		"atmosphere_conditions": {
+			"temperature_offset_k": temperature_offset_input.value,
+			"pressure_scale": pressure_scale_input.value
+		}
 	}
 	var wind_velocity_m_s := Vector3(wind_x_input.value, 0.0, wind_z_input.value)
 	if not simulation.configure(initial_state, model, wind_velocity_m_s):
@@ -186,7 +196,8 @@ func _update_flight_display() -> void:
 	if simulation.state == null:
 		return
 	var state := simulation.state
-	var atmosphere := ReeveAtmosphere.sample(state.position_m.y)
+	var atmosphere_conditions: Dictionary = simulation.model.get("atmosphere_conditions", {})
+	var atmosphere := ReeveAtmosphere.sample(state.position_m.y, atmosphere_conditions)
 	var speed: float = state.velocity_m_s.length()
 	var dynamic_pressure: float = 0.0
 	if not simulation.telemetry.samples.is_empty():

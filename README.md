@@ -29,6 +29,7 @@ Implemented foundations:
 - Validated external propulsion-curve reader with linear interpolation, impulse integration and explicit source-quality labels; Flight Lab can load a user-supplied JSON curve and combine it with separately entered propellant mass.
 - A translational and rotational rigid-body foundation with gravity, supplied thrust, quadratic drag, quaternion attitude, diagonal-inertia angular dynamics and body-frame thrust direction; an optional supplied-coefficient aerodynamic model adds drag/lift forces and CP-offset moments.
 - A fixed-step simulation controller with a bounded catch-up accumulator, validated model inputs and optional ground-contact event.
+- Transactional physics stepping: each step is evaluated on a candidate state and committed only if all translational, aerodynamic and rotational calculations succeed; rejected steps leave the prior state untouched.
 - An educational recovery model with altitude-triggered supplied parachute drag, terminal descent speed estimate and explicit limitations.
 - Lightweight 3D launch environment with ground plane, launch pad, ambient lighting and shadows; selectable external-chase, side-observation, ground-observation, rocket-follow, free (WASD/QE) and engineering-inspection cameras.
 - Live gravity-only drop demonstration with position, speed, acceleration, wind-relative dynamic pressure, mass and time telemetry.

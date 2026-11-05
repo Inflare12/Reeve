@@ -4,11 +4,13 @@ extends SceneTree
 func _initialize() -> void:
 	var failures: int = 0
 	failures += _check_atmosphere()
+	failures += _check_atmosphere_domain()
 	failures += _check_gravity()
 	failures += _check_drag_opposes_motion()
 	failures += _check_mass_accounting()
 	failures += _check_fixed_step_controller()
 	failures += _check_component_mass()
+	failures += _check_invalid_component_dimensions()
 	failures += _check_configuration_rollup()
 	failures += _check_configuration_serialization()
 	failures += _check_aerodynamic_force_model()
@@ -299,5 +301,37 @@ func _check_telemetry_json_export() -> int:
 		return 1
 	if parsed.get("samples", []).size() != 1 or parsed.get("units", {}).get("time", "") != "s":
 		push_error("Telemetry JSON sample or units metadata missing")
+		return 1
+	return 0
+
+func _check_atmosphere_domain() -> int:
+	for altitude in [-501.0, 20001.0, INF, NAN]:
+		var sample := ReeveAtmosphere.sample(altitude)
+		if bool(sample.get("ok", true)):
+			push_error("Atmosphere silently accepted out-of-domain altitude: %s" % altitude)
+			return 1
+	var upper := ReeveAtmosphere.sample(20000.0)
+	if not bool(upper.get("ok", false)):
+		push_error("Atmosphere rejected its documented upper boundary")
+		return 1
+	var state := ReeveFlightState.new()
+	state.position_m.y = 25000.0
+	state.mass_kg = 1.0
+	var original_position := state.position_m
+	var model := {"dry_mass_kg": 1.0, "drag_coefficient": 0.0, "reference_area_m2": 0.0}
+	if ReeveFlightIntegrator.step(state, 1.0 / 120.0, model) or state.position_m != original_position or state.time_s != 0.0:
+		push_error("Flight integrator did not reject out-of-domain atmosphere without mutation")
+		return 1
+	return 0
+
+func _check_invalid_component_dimensions() -> int:
+	var component := ReeveRocketComponent.new()
+	component.component_id = "invalid_shell"
+	component.display_name = "Invalid shell"
+	component.geometry_type = "cylinder_shell"
+	component.material_id = "aluminium_6061_t6"
+	component.dimensions_m = {"outer_radius": NAN, "wall_thickness": 0.001, "length": 1.0}
+	if component.validate().is_empty() or component.calculate_mass_kg() >= 0.0:
+		push_error("Non-finite geometry produced a component mass")
 		return 1
 	return 0

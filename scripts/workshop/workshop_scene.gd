@@ -150,6 +150,12 @@ func _build_interface() -> void:
 	load_button.pressed.connect(_load_configuration)
 	column.add_child(load_button)
 
+	var handoff_button := Button.new()
+	handoff_button.name = "SaveAndOpenFlightLabButton"
+	handoff_button.text = "Save Vehicle and Open Flight Lab"
+	handoff_button.pressed.connect(_save_and_open_flight_lab)
+	column.add_child(handoff_button)
+
 	var return_button := Button.new()
 	return_button.text = "Back to Flight Lab"
 	return_button.pressed.connect(func() -> void:
@@ -373,12 +379,20 @@ func _add_visual_component(node_name: String, mesh: Mesh, position_m: Vector3, m
 	visual.material_override = material
 	rocket_visual.add_child(visual)
 
-func _save_configuration() -> void:
+func _save_configuration() -> Error:
 	var save_error := configuration.save_to_file("user://reeve_vehicle.json")
 	if save_error == OK:
 		mass_label.text += "\nSaved: user://reeve_vehicle.json"
 	else:
 		mass_label.text += "\nSave failed: %s" % error_string(save_error)
+	return save_error
+
+func _save_and_open_flight_lab() -> void:
+	var save_error: Error = configuration.save_to_file("user://reeve_vehicle.json")
+	if save_error != OK:
+		mass_label.text += "\nHandoff save failed: %s" % error_string(save_error)
+		return
+	get_tree().change_scene_to_file("res://scenes/main/main.tscn")
 
 func _load_configuration() -> void:
 	var loaded := ReeveRocketConfiguration.new()

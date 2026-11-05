@@ -94,6 +94,16 @@ func _build_interface() -> void:
 	disclaimer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(disclaimer)
 
+	var save_button := Button.new()
+	save_button.text = "Save Vehicle"
+	save_button.pressed.connect(_save_configuration)
+	column.add_child(save_button)
+
+	var load_button := Button.new()
+	load_button.text = "Load Vehicle"
+	load_button.pressed.connect(_load_configuration)
+	column.add_child(load_button)
+
 	var return_button := Button.new()
 	return_button.text = "Back to Flight Lab"
 	return_button.pressed.connect(func() -> void:
@@ -174,3 +184,33 @@ func _update_model() -> void:
 	nose.position.y = body_length.value + radius * 1.2
 	nose.material_override = shell_material
 	rocket_visual.add_child(nose)
+
+func _save_configuration() -> void:
+	var save_error := configuration.save_to_file("user://reeve_vehicle.json")
+	if save_error == OK:
+		mass_label.text += "\\nSaved: user://reeve_vehicle.json"
+	else:
+		mass_label.text += "\\nSave failed: %s" % error_string(save_error)
+
+func _load_configuration() -> void:
+	var loaded := ReeveRocketConfiguration.new()
+	var load_error := loaded.load_from_file("user://reeve_vehicle.json")
+	if load_error != OK:
+		mass_label.text += "\\nLoad failed: %s" % error_string(load_error)
+		return
+	if loaded.components.is_empty():
+		mass_label.text += "\\nConfiguration contains no components."
+		return
+	var component: ReeveRocketComponent = loaded.components[0]
+	if component.geometry_type != "cylinder_shell":
+		mass_label.text += "\\nFirst component is not a supported fuselage shell."
+		return
+	body_length.value = float(component.dimensions_m.get("length", body_length.value))
+	body_diameter.value = float(component.dimensions_m.get("outer_radius", body_diameter.value * 0.5)) * 2.0
+	wall_thickness.value = float(component.dimensions_m.get("wall_thickness", wall_thickness.value))
+	for index in range(material_select.item_count):
+		if str(material_select.get_item_metadata(index)) == component.material_id:
+			material_select.select(index)
+			break
+	configuration = loaded
+	_update_model()

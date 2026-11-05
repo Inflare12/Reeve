@@ -364,8 +364,16 @@ func _check_profile_drives_flight() -> int:
 		push_error("Simulation controller rejected a valid supplied propulsion profile")
 		return 1
 	controller.advance_frame(0.1)
-	if absf(controller.state.applied_thrust_n - 100.0) > 0.000001:
-		push_error("Supplied propulsion profile thrust was not applied")
+	if absf(controller.state.applied_thrust_n - 100.0) > 0.000001 or absf(controller.state.applied_mass_flow_kg_s - 0.1) > 0.000001:
+		push_error("Supplied propulsion profile thrust or actual mass flow was not applied")
+		return 1
+	if controller.telemetry.samples.is_empty():
+		push_error("Propulsion profile did not produce telemetry samples")
+		return 1
+	var last_sample: Dictionary = controller.telemetry.samples[controller.telemetry.samples.size() - 1]
+	var expected_isp: float = 100.0 / (0.1 * ReeveConstants.STANDARD_GRAVITY)
+	if absf(float(last_sample.specific_impulse_s) - expected_isp) > 0.000001 or absf(float(last_sample.effective_exhaust_velocity_m_s) - expected_isp * ReeveConstants.STANDARD_GRAVITY) > 0.000001:
+		push_error("Derived specific impulse or effective exhaust velocity is incorrect")
 		return 1
 	var expected_consumption: float = 0.1 * controller.state.time_s
 	if absf(controller.state.mass_kg - (10.0 - expected_consumption)) > 0.000001 or absf(controller.state.propellant_remaining_kg - (2.0 - expected_consumption)) > 0.000001:

@@ -45,7 +45,6 @@ func _initialize() -> void:
 	var baseline_mass: float = float(instance.configuration.get_mass_breakdown().total_mass_kg)
 	var mass_inputs: Dictionary = instance.get("component_mass_inputs")
 	mass_inputs["payload"].value = 1.25
-	instance.call("_update_model")
 	var updated_mass: float = float(instance.configuration.get_mass_breakdown().total_mass_kg)
 	if instance.configuration.components.size() != 6 or absf(updated_mass - baseline_mass - float(mass_inputs["payload"].value)) > 0.000001:
 		push_error("Payload mass roll-up failed input=%.3f count=%d base=%.3f updated=%.3f" % [float(mass_inputs["payload"].value), instance.configuration.components.size(), baseline_mass, updated_mass])

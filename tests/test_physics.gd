@@ -15,6 +15,7 @@ func _initialize() -> void:
 	failures += _check_ground_contact_event()
 	failures += _check_supplied_propulsion_profile()
 	failures += _check_profile_drives_flight()
+	failures += _check_telemetry_json_export()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -271,5 +272,32 @@ func _check_profile_drives_flight() -> int:
 	var expected_consumption: float = 0.1 * controller.state.time_s
 	if absf(controller.state.mass_kg - (10.0 - expected_consumption)) > 0.000001 or absf(controller.state.propellant_remaining_kg - (2.0 - expected_consumption)) > 0.000001:
 		push_error("Supplied propulsion profile mass flow was not applied")
+		return 1
+	return 0
+
+func _check_telemetry_json_export() -> int:
+	var state := ReeveFlightState.new()
+	state.position_m = Vector3(1.0, 2.0, 3.0)
+	state.velocity_m_s = Vector3(0.0, 4.0, 0.0)
+	state.mass_kg = 7.5
+	var recorder := ReeveTelemetryRecorder.new()
+	recorder.record(state, ReeveAtmosphere.sample(2.0), 12.0)
+	var path := "user://reeve_telemetry_test.json"
+	var save_error := recorder.export_json(path)
+	if save_error != OK:
+		push_error("Telemetry JSON export failed")
+		return 1
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		push_error("Telemetry JSON output could not be reopened")
+		return 1
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	if not parsed is Dictionary or int(parsed.get("schema_version", 0)) != 1:
+		push_error("Telemetry JSON schema is invalid")
+		return 1
+	if parsed.get("samples", []).size() != 1 or parsed.get("units", {}).get("time", "") != "s":
+		push_error("Telemetry JSON sample or units metadata missing")
 		return 1
 	return 0

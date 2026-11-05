@@ -11,6 +11,7 @@ var material_select: OptionButton
 var mass_label: Label
 var rocket_visual: Node3D
 var component_list: ItemList
+var selected_component_label: Label
 var component_mass_inputs: Dictionary = {}
 var configuration := ReeveRocketConfiguration.new()
 
@@ -123,7 +124,12 @@ func _build_interface() -> void:
 	column.add_child(hierarchy_label)
 	component_list = ItemList.new()
 	component_list.custom_minimum_size = Vector2(300.0, 130.0)
+	component_list.item_selected.connect(_on_component_selected)
 	column.add_child(component_list)
+	selected_component_label = Label.new()
+	selected_component_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	selected_component_label.text = "Select a component to inspect its modelling status."
+	column.add_child(selected_component_label)
 
 	var disclaimer := Label.new()
 	disclaimer.text = "Mass assumes a uniform cylindrical shell. No joints, reinforcements, cut-outs, loads or thermal qualification are modelled."
@@ -239,12 +245,15 @@ func _update_model(rebuild_visuals: bool = true) -> void:
 	]
 	component_list.clear()
 	component_list.add_item("Main fuselage shell — %.3f kg" % mass)
+	component_list.set_item_metadata(component_list.item_count - 1, "main_fuselage")
 	for fin_index in range(int(fin_count.value)):
 		component_list.add_item("Fin %d — included in mass" % (fin_index + 1))
+		component_list.set_item_metadata(component_list.item_count - 1, "fin_%d" % fin_index)
 	for component_key in component_mass_inputs:
 		var entered_mass: float = float(component_mass_inputs[component_key].value)
 		var category_name: String = str(mass_categories[component_key])
 		component_list.add_item("%s — %.3f kg%s" % [category_name, entered_mass, "" if entered_mass > 0.0 else " (not included)"])
+		component_list.set_item_metadata(component_list.item_count - 1, "mass_%s" % component_key if entered_mass > 0.0 else "visual_%s" % component_key)
 
 	if not rebuild_visuals:
 		return
@@ -333,6 +342,18 @@ func _update_model(rebuild_visuals: bool = true) -> void:
 	var support_mesh := BoxMesh.new()
 	support_mesh.size = Vector3(radius * 1.3, body_length.value * 0.025, radius * 0.08)
 	_add_visual_component("StructuralSupportVisual", support_mesh, Vector3(0.0, body_length.value * 0.50, 0.0), _make_visual_material(Color(0.62, 0.65, 0.68)))
+
+func _on_component_selected(index: int) -> void:
+	var component_id: String = str(component_list.get_item_metadata(index))
+	if component_id == "main_fuselage":
+		selected_component_label.text = "Main fuselage shell: geometry-derived cylindrical shell mass. Edit body dimensions and material above."
+	elif component_id.begins_with("fin_"):
+		selected_component_label.text = "Stabilizing fin: rectangular-plate mass estimate. Edit fin count, span and chord above."
+	elif component_id.begins_with("mass_"):
+		var key: String = component_id.trim_prefix("mass_")
+		selected_component_label.text = "User-entered component mass: %.3f kg. Edit its mass field above." % float(component_mass_inputs[key].value)
+	else:
+		selected_component_label.text = "Conceptual visual subassembly only. It is not included in total mass until you enter a mass estimate above."
 
 func _make_visual_material(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()

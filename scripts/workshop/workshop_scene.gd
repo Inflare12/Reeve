@@ -188,22 +188,22 @@ func _update_model() -> void:
 func _save_configuration() -> void:
 	var save_error := configuration.save_to_file("user://reeve_vehicle.json")
 	if save_error == OK:
-		mass_label.text += "\\nSaved: user://reeve_vehicle.json"
+		mass_label.text += "\nSaved: user://reeve_vehicle.json"
 	else:
-		mass_label.text += "\\nSave failed: %s" % error_string(save_error)
+		mass_label.text += "\nSave failed: %s" % error_string(save_error)
 
 func _load_configuration() -> void:
 	var loaded := ReeveRocketConfiguration.new()
 	var load_error := loaded.load_from_file("user://reeve_vehicle.json")
 	if load_error != OK:
-		mass_label.text += "\\nLoad failed: %s" % error_string(load_error)
+		mass_label.text += "\nLoad failed: %s" % error_string(load_error)
 		return
 	if loaded.components.is_empty():
-		mass_label.text += "\\nConfiguration contains no components."
+		mass_label.text += "\nConfiguration contains no components."
 		return
 	var component: ReeveRocketComponent = loaded.components[0]
 	if component.geometry_type != "cylinder_shell":
-		mass_label.text += "\\nFirst component is not a supported fuselage shell."
+		mass_label.text += "\nFirst component is not a supported fuselage shell."
 		return
 	body_length.value = float(component.dimensions_m.get("length", body_length.value))
 	body_diameter.value = float(component.dimensions_m.get("outer_radius", body_diameter.value * 0.5)) * 2.0

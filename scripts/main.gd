@@ -9,10 +9,19 @@ var time_scale: float = 1.0
 var run_button: Button
 var time_scale_label: Label
 var telemetry_plots: Array[ReeveTelemetryPlot] = []
+var wind_x_input: SpinBox
+var wind_z_input: SpinBox
 
 func _ready() -> void:
 	camera.look_at(Vector3(0.0, 2.0, 0.0), Vector3.UP)
 	status_label.text = "READY — no propulsion profile loaded. No flight has been simulated."
+
+	wind_x_input = _add_environment_spinbox("Wind X velocity (m/s)", -100.0, 100.0, 0.0, 0.5)
+	wind_x_input.name = "WindXInput"
+	$CanvasLayer/Panel/Info.add_child(wind_x_input)
+	wind_z_input = _add_environment_spinbox("Wind Z velocity (m/s)", -100.0, 100.0, 0.0, 0.5)
+	wind_z_input.name = "WindZInput"
+	$CanvasLayer/Panel/Info.add_child(wind_z_input)
 
 	var gravity_button := Button.new()
 	gravity_button.name = "GravityDropButton"
@@ -92,6 +101,21 @@ func _process(delta: float) -> void:
 	elif not simulation.last_error.is_empty():
 		status_label.text = "SIMULATION ERROR — %s" % simulation.last_error
 
+func _add_environment_spinbox(label_text: String, minimum: float, maximum: float, initial: float, step: float) -> SpinBox:
+	var container := VBoxContainer.new()
+	var label := Label.new()
+	label.text = label_text
+	container.add_child(label)
+	var spin := SpinBox.new()
+	spin.min_value = minimum
+	spin.max_value = maximum
+	spin.value = initial
+	spin.step = step
+	spin.rounded = false
+	container.add_child(spin)
+	$CanvasLayer/Panel/Info.add_child(container)
+	return spin
+
 func _toggle_pause() -> void:
 	if simulation.state == null:
 		status_label.text = "Start a demonstration before pausing."
@@ -144,7 +168,8 @@ func _start_gravity_drop() -> void:
 		"reference_area_m2": PI * 0.28 * 0.28,
 		"ground_altitude_m": 0.0
 	}
-	if not simulation.configure(initial_state, model):
+	var wind_velocity_m_s := Vector3(wind_x_input.value, 0.0, wind_z_input.value)
+	if not simulation.configure(initial_state, model, wind_velocity_m_s):
 		status_label.text = "Could not start test: %s" % simulation.last_error
 		return
 	status_label.text = "RUNNING — gravity-only drop test"

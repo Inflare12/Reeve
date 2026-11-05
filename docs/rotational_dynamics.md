@@ -12,7 +12,7 @@ The implementation evaluates the gyroscopic term in body coordinates, advances a
 
 - The inertia tensor is diagonal and assumes the supplied axes are principal axes.
 - The moment is externally supplied; aerodynamic stability derivatives, fin moments, thrust misalignment moments and control-system response are not yet derived automatically.
-- The translational aerodynamic model remains a point-mass drag/lift approximation and is not yet fully coupled to body attitude and vehicle geometry.
+- An optional attitude-coupled aerodynamic path derives a simplified angle of attack from the body longitudinal axis and relative airflow, then applies supplied Mach-dependent drag and supplied lift slope to the translational force balance. It remains a simplified model: no fin-resolved flow, damping derivatives, centre-of-pressure migration, dynamic stall, control-surface response or aerodynamic pitching/yawing moments are generated.
 - This is a first rotational dynamics milestone, not a complete validated 6-DOF vehicle model.
 - Users must supply defensible inertia and moment data; REEVE does not infer them from a visual mesh.
 

@@ -70,6 +70,36 @@ func _initialize() -> void:
 		failures += 1
 	if FileAccess.file_exists("user://reeve_vehicle.json"):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path("user://reeve_vehicle.json"))
+	var valid_path := "user://reeve_valid_fixture.json"
+	if instance.configuration.save_to_file(valid_path) != OK:
+		push_error("Could not save valid workshop fixture")
+		failures += 1
+	else:
+		var fixture_file := FileAccess.open(valid_path, FileAccess.READ)
+		var fixture_data: Variant = JSON.parse_string(fixture_file.get_as_text())
+		fixture_file.close()
+		fixture_data.components.append(fixture_data.components[0].duplicate(true))
+		var invalid_path := "user://reeve_duplicate_fixture.json"
+		var invalid_file := FileAccess.open(invalid_path, FileAccess.WRITE)
+		invalid_file.store_string(JSON.stringify(fixture_data))
+		invalid_file.close()
+		var preserved := ReeveRocketConfiguration.new()
+		preserved.vehicle_name = "Preserved in-memory configuration"
+		var existing := ReeveRocketComponent.new()
+		existing.component_id = "existing"
+		existing.display_name = "Existing component"
+		existing.geometry_type = "user_mass"
+		existing.user_mass_kg = 1.0
+		preserved.add_component(existing)
+		if preserved.load_from_file(invalid_path) != ERR_INVALID_DATA:
+			push_error("Workshop loader accepted duplicate component IDs")
+			failures += 1
+		if preserved.vehicle_name != "Preserved in-memory configuration" or preserved.components.size() != 1:
+			push_error("Rejected workshop file partially overwrote the existing configuration")
+			failures += 1
+		for path in [valid_path, invalid_path]:
+			if FileAccess.file_exists(path):
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	instance.queue_free()
 	if failures == 0:
 		print("REEVE workshop checks: PASS")

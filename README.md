@@ -21,6 +21,7 @@ Implemented foundations:
 - Optional deterministic three-axis sinusoidal wind/gust model sampled at every fixed physics step.
 - A coefficient-driven aerodynamic module calculating Mach, dynamic pressure, Reynolds number, drag and supplied-slope lift without inventing vehicle coefficients.
 - A bounded linear-elastic axial tension estimate with explicit metal/composite strength-reference labels and engineering limitations.
+- A Biot-number-checked lumped-capacitance convective thermal response estimate using supplied heat-transfer inputs.
 - Validated external propulsion-curve reader with linear interpolation, impulse integration and explicit source-quality labels; the simulation controller can apply the supplied thrust and mass-flow samples to the flight model.
 - A translational and rotational rigid-body foundation with gravity, supplied thrust, quadratic drag, quaternion attitude, diagonal-inertia angular dynamics and body-frame thrust direction.
 - A fixed-step simulation controller with a bounded catch-up accumulator, validated model inputs and optional ground-contact event.
@@ -66,6 +67,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     scripts/physics/constants.gd
     scripts/materials/material_catalog.gd
     scripts/structural/structural_estimate.gd
+    scripts/structural/thermal_estimate.gd
     scripts/workshop/rocket_component.gd
     scripts/workshop/rocket_configuration.gd
     scripts/workshop/workshop_scene.gd
@@ -91,6 +93,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     docs/wind_model.md
     docs/structural_estimate.md
     docs/telemetry_plots.md
+    docs/thermal_estimate.md
 
 ## Model limitations
 

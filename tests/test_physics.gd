@@ -12,6 +12,7 @@ func _initialize() -> void:
 	failures += _check_configuration_rollup()
 	failures += _check_configuration_serialization()
 	failures += _check_aerodynamic_force_model()
+	failures += _check_ground_contact_event()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -181,5 +182,26 @@ func _check_aerodynamic_force_model() -> int:
 	var outside := ReeveAerodynamics.interpolate_drag_coefficient(3.0, curve)
 	if bool(outside.get("ok", true)):
 		push_error("Aerodynamic model should reject extrapolation outside supplied data")
+		return 1
+	return 0
+
+func _check_ground_contact_event() -> int:
+	var state := ReeveFlightState.new()
+	state.position_m = Vector3(0.0, 0.001, 0.0)
+	state.mass_kg = 5.0
+	var controller := ReeveSimulationController.new()
+	var model := {
+		"thrust_n": 0.0,
+		"dry_mass_kg": 5.0,
+		"drag_coefficient": 0.0,
+		"reference_area_m2": 0.0,
+		"ground_altitude_m": 0.0
+	}
+	if not controller.configure(state, model):
+		push_error("Ground-contact test could not configure controller")
+		return 1
+	controller.advance_frame(1.0 / 60.0)
+	if not controller.ground_contact or controller.running or absf(controller.state.position_m.y) > 0.000001 or controller.state.velocity_m_s.length() > 0.000001:
+		push_error("Ground-contact event did not stop and settle the vehicle state")
 		return 1
 	return 0

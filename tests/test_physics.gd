@@ -249,6 +249,11 @@ func _check_attitude_coupled_aerodynamics() -> int:
 	if ReeveSimulationController.new().configure(state, invalid_offset_model):
 		push_error("Controller accepted a non-finite aerodynamic centre-of-pressure offset")
 		return 1
+	var missing_inertia_model: Dictionary = model.duplicate(true)
+	missing_inertia_model.erase("inertia_diagonal_kg_m2")
+	if ReeveSimulationController.new().configure(state, missing_inertia_model):
+		push_error("Controller accepted a non-zero aerodynamic lever arm without an inertia tensor")
+		return 1
 	var aligned_state := ReeveFlightState.new()
 	aligned_state.position_m.y = 100.0
 	aligned_state.velocity_m_s = Vector3(0.0, 0.0, 100.0)

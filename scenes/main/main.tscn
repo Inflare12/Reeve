@@ -42,7 +42,7 @@ fov = 55.0
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 520.0
-offset_bottom = 210.0
+offset_bottom = 340.0
 
 [node name="Info" type="VBoxContainer" parent="CanvasLayer/Panel"]
 layout_mode = 2

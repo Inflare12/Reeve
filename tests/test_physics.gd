@@ -29,6 +29,7 @@ func _initialize() -> void:
 	failures += _check_structural_axial_estimate()
 	failures += _check_thermal_lumped_response()
 	failures += _check_analytic_free_fall()
+	failures += _check_static_margin_estimate()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -672,5 +673,20 @@ func _check_flight_handoff_data() -> int:
 		return 1
 	if bool(handoff.drag_coefficient_supplied) or bool(handoff.propulsion_profile_supplied):
 		push_error("Workshop handoff falsely claimed unknown propulsion or drag data")
+		return 1
+	return 0
+
+func _check_static_margin_estimate() -> int:
+	var stable := ReeveStabilityEstimate.calculate_static_margin(1.0, 2.5, 0.5)
+	if not bool(stable.get("ok", false)) or absf(float(stable.static_margin_calibers) - 3.0) > 0.000001:
+		push_error("Static-margin calculation is incorrect for aft CP")
+		return 1
+	var negative := ReeveStabilityEstimate.calculate_static_margin(2.5, 1.0, 0.5)
+	if not bool(negative.get("ok", false)) or float(negative.static_margin_calibers) >= 0.0:
+		push_error("Static-margin sign convention is incorrect for forward CP")
+		return 1
+	var invalid := ReeveStabilityEstimate.calculate_static_margin(1.0, 2.0, 0.0)
+	if bool(invalid.get("ok", true)):
+		push_error("Static-margin calculation accepted zero reference diameter")
 		return 1
 	return 0

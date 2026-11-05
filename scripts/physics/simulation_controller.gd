@@ -186,6 +186,28 @@ func _validate_model(initial_state: ReeveFlightState, supplied_model: Dictionary
 		var cp_offset: Vector3 = aerodynamic_configuration.get("center_of_pressure_offset_body_m", Vector3.ZERO)
 		if not cp_offset.is_finite():
 			return "Aerodynamic center-of-pressure offset must contain finite values."
+	var aerodynamic_configuration: Variant = supplied_model.get("aerodynamic_model", {})
+	if not aerodynamic_configuration is Dictionary:
+		return "Aerodynamic model configuration must be a Dictionary."
+	if not aerodynamic_configuration.is_empty():
+		var aero_area: float = float(aerodynamic_configuration.get("reference_area_m2", NAN))
+		var aero_length: float = float(aerodynamic_configuration.get("characteristic_length_m", NAN))
+		var lift_slope: float = float(aerodynamic_configuration.get("lift_slope_per_rad", 0.0))
+		var cp_offset: Vector3 = aerodynamic_configuration.get("center_of_pressure_offset_body_m", Vector3.ZERO)
+		if not is_finite(aero_area) or aero_area <= 0.0 or not is_finite(aero_length) or aero_length <= 0.0 or not is_finite(lift_slope) or not cp_offset.is_finite():
+			return "Aerodynamic area, characteristic length, lift slope and CP offset must be finite and geometry must be positive."
+		var supplied_drag_curve: Variant = aerodynamic_configuration.get("drag_curve", [])
+		if not supplied_drag_curve is Array or supplied_drag_curve.size() < 2:
+			return "Aerodynamic drag curve requires at least two supplied points."
+		var checked_drag_curve: Array[Dictionary] = []
+		for curve_point in supplied_drag_curve:
+			if not curve_point is Dictionary:
+				return "Every aerodynamic drag-curve point must be a Dictionary."
+			checked_drag_curve.append(curve_point)
+		var first_mach: float = float(checked_drag_curve[0].get("mach", NAN))
+		var curve_validation: Dictionary = ReeveAerodynamics.interpolate_drag_coefficient(first_mach, checked_drag_curve)
+		if not bool(curve_validation.get("ok", false)):
+			return "Invalid aerodynamic drag curve: %s" % str(curve_validation.get("error", "unknown error"))
 	var recovery_configuration: Variant = supplied_model.get("recovery", {})
 	if not recovery_configuration is Dictionary:
 		return "Recovery configuration must be a Dictionary."

@@ -28,6 +28,7 @@ Implemented foundations:
 - Live gravity-only drop demonstration with position, speed, acceleration, wind-relative dynamic pressure, mass and time telemetry.
 - Flight Lab controls for pause/resume, exact single-step execution, bounded simulation time scaling, and CSV/JSON telemetry export.
 - Telemetry samples with CSV and unit-labelled JSON export; Mach and dynamic pressure are computed from air-relative velocity including the configured wind vector. JSON exports also include state-triggered mission events such as apogee, descent and ground contact.
+- Live five-channel telemetry plots for altitude, velocity, acceleration, dynamic pressure and mass, driven by recorded simulation samples.
 - Basic analytical checks and model documentation.
 
 Not yet implemented: full coupled 6-DOF aerodynamics and stability derivatives, validated thermal/structural analysis, component-specific geometry editing and workshop-to-flight handoff, advanced weather, or a professional telemetry plotting UI. These must not be inferred from the current scaffold.
@@ -78,6 +79,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     scripts/physics/flight_integrator.gd
     scripts/physics/simulation_controller.gd
     scripts/telemetry/telemetry_recorder.gd
+    scripts/telemetry/telemetry_plot.gd
     tests/test_physics.gd
     docs/model_assumptions.md
     docs/aerodynamics_model.md
@@ -88,6 +90,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     docs/workshop_components.md
     docs/wind_model.md
     docs/structural_estimate.md
+    docs/telemetry_plots.md
 
 ## Model limitations
 

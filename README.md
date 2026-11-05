@@ -33,7 +33,7 @@ Implemented foundations:
 - Live gravity-only drop demonstration with position, speed, acceleration, wind-relative dynamic pressure, mass and time telemetry.
 - Flight Lab controls for horizontal wind velocity, temperature offset, pressure scaling, pause/resume, exact single-step execution, bounded simulation time scaling, and CSV/JSON telemetry export.
 - Telemetry samples with CSV and unit-labelled JSON export, including actual mass flow and derived specific impulse/effective exhaust velocity; Mach and dynamic pressure are computed from air-relative velocity including the configured wind vector. JSON exports also include state-triggered mission events such as apogee, descent and ground contact.
-- Live five-channel telemetry plots for altitude, velocity, acceleration, dynamic pressure and mass, driven by recorded simulation samples.
+- Live five-channel telemetry plots for altitude, velocity, acceleration, dynamic pressure and mass, driven by recorded simulation samples with bounded 50,000-sample retention and time-axis-aware decimation.
 - Basic analytical checks and model documentation.
 
 Not yet implemented: fin-resolved aerodynamic moments and stability derivatives, a complete validated 6-DOF aerodynamic model, pressure-vessel and buckling analysis, detailed geometry editing for every subassembly, advanced weather, multi-run history comparison and advanced telemetry analysis tools. Workshop-to-flight handoff transfers the current vehicle mass, fuselage dimensions and fin visual geometry; it deliberately does not infer unknown drag or propulsion data. Structural and thermal modules are bounded analytical estimates, not validated engineering qualification. These capabilities must not be inferred from the current implementation.

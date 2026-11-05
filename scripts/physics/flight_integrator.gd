@@ -58,7 +58,7 @@ static func step(
 	var area: float = maxf(float(model.get("reference_area_m2", 0.01)), 0.0)
 	var recovery_configuration: Variant = model.get("recovery", {})
 	if recovery_configuration is Dictionary and not recovery_configuration.is_empty():
-		if ReeveRecoveryModel.is_deployed(state.position_m.y, recovery_configuration):
+		if ReeveRecoveryModel.is_deployed(state.position_m.y, state.velocity_m_s.y, recovery_configuration):
 			# Combine drag areas through the equivalent Cd*A product.
 			var recovery_cd_area: float = float(recovery_configuration.drag_coefficient) * float(recovery_configuration.canopy_area_m2)
 			var vehicle_cd_area: float = cd * area

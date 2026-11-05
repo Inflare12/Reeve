@@ -23,7 +23,7 @@ func _draw() -> void:
 	draw_rect(bounds, Color(0.035, 0.05, 0.075), true)
 	draw_rect(bounds, Color(0.22, 0.29, 0.38), false, 1.0)
 	var font: Font = ThemeDB.fallback_font
-	draw_string(font, Vector2(9.0, 17.0), "%s (%s)" % [plot_title, unit_label], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, Color(0.86, 0.91, 0.97))
+	draw_string(font, Vector2(9.0, 17.0), plot_title + " (" + unit_label + ")", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, Color(0.86, 0.91, 0.97))
 	var plot_rect := Rect2(Vector2(34.0, 27.0), Vector2(maxf(size.x - 44.0, 10.0), maxf(size.y - 39.0, 10.0)))
 	for grid_index in range(1, 4):
 		var y: float = plot_rect.position.y + plot_rect.size.y * float(grid_index) / 4.0
@@ -57,5 +57,5 @@ func _draw() -> void:
 		draw_circle(points[0], 2.5, Color(0.35, 0.82, 0.92))
 	elif points.size() > 1:
 		draw_polyline(points, Color(0.35, 0.82, 0.92), 1.6, true)
-	draw_string(font, Vector2(4.0, plot_rect.position.y + 4.0), "%.3f" % maximum, HORIZONTAL_ALIGNMENT_LEFT, 28.0, 9, Color(0.62, 0.7, 0.79))
-	draw_string(font, Vector2(4.0, plot_rect.end.y), "%.3f" % minimum, HORIZONTAL_ALIGNMENT_LEFT, 28.0, 9, Color(0.62, 0.7, 0.79))
+	draw_string(font, Vector2(4.0, plot_rect.position.y + 4.0), str(maximum), HORIZONTAL_ALIGNMENT_LEFT, 28.0, 9, Color(0.62, 0.7, 0.79))
+	draw_string(font, Vector2(4.0, plot_rect.end.y), str(minimum), HORIZONTAL_ALIGNMENT_LEFT, 28.0, 9, Color(0.62, 0.7, 0.79))

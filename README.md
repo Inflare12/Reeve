@@ -21,7 +21,8 @@ Implemented foundations:
 - A coefficient-driven aerodynamic module calculating Mach, dynamic pressure, Reynolds number, drag and supplied-slope lift without inventing vehicle coefficients.
 - Validated external propulsion-curve reader with linear interpolation, impulse integration and explicit source-quality labels; the simulation controller can apply the supplied thrust and mass-flow samples to the flight model.
 - A deterministic point-mass translational flight model with gravity, supplied thrust, and quadratic drag.
-- A fixed-step simulation controller with a bounded catch-up accumulator and optional ground-contact event.
+- A fixed-step simulation controller with a bounded catch-up accumulator, validated model inputs and optional ground-contact event.
+- An educational recovery model with altitude-triggered supplied parachute drag, terminal descent speed estimate and explicit limitations.
 - Live gravity-only drop demonstration with position, speed, acceleration, dynamic-pressure, mass and time telemetry.
 - Telemetry samples with CSV and unit-labelled JSON export.
 - Basic analytical checks and model documentation.
@@ -67,6 +68,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     scripts/physics/atmosphere.gd
     scripts/aerodynamics/aerodynamics.gd
     scripts/propulsion/propulsion_profile.gd
+    scripts/recovery/recovery_model.gd
     scripts/physics/flight_state.gd
     scripts/physics/flight_integrator.gd
     scripts/physics/simulation_controller.gd
@@ -76,6 +78,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     docs/aerodynamics_model.md
     docs/flight_demo.md
     docs/propulsion_profile.md
+    docs/recovery_model.md
 
 ## Model limitations
 

@@ -50,7 +50,7 @@ func advance_frame(frame_delta_s: float, time_scale: float = 1.0) -> int:
 			running = false
 			break
 		var atmosphere := ReeveAtmosphere.sample(state.position_m.y)
-		telemetry.record(state, atmosphere, float(model.get("thrust_n", 0.0)))
+		telemetry.record(state, atmosphere, state.applied_thrust_n)
 		accumulator_s -= fixed_dt_s
 		steps += 1
 	return steps

@@ -56,7 +56,7 @@ Body-frame thrust direction is rotated into world coordinates by the current qua
 
 ## Aerodynamics
 
-The standalone aerodynamic module calculates flow properties, drag and a supplied-slope lift estimate. Drag coefficients must be provided as a Mach curve; extrapolation outside that curve is rejected. The translational flight integrator currently uses its configured Cd and reference area rather than automatically coupling the standalone aerodynamic curve and lift model into attitude dynamics. No universal rocket coefficient database is assumed.
+The standalone aerodynamic module calculates flow properties, drag and a supplied-slope lift estimate. An optional attitude-coupled path is available when a user supplies a Mach-indexed drag-coefficient curve, reference area, characteristic length and lift slope. The model estimates angle of attack from the body +Y axis and relative airflow, projects the body axis perpendicular to airflow for lift direction, and applies supplied drag and lift to translational acceleration. Coefficient extrapolation is rejected: if simulated Mach leaves the supplied curve range, the aerodynamic step fails rather than inventing a coefficient. This remains a simplified educational coupling, not a validated aerodynamic database or stability-derivative model. The legacy constant-Cd path remains available when no aerodynamic_model is supplied.
 
 ## Recovery, structural and thermal estimates
 

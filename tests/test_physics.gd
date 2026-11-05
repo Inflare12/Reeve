@@ -32,6 +32,7 @@ func _initialize() -> void:
 	failures += _check_thermal_lumped_response()
 	failures += _check_analytic_free_fall()
 	failures += _check_static_margin_estimate()
+	failures += _check_bounded_telemetry_retention()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -910,5 +911,29 @@ func _check_integrated_aerodynamic_moment() -> int:
 		return 1
 	if out_of_curve_controller.step_once() or out_of_curve_controller.state.time_s != 0.0 or out_of_curve_controller.state.mass_kg != 2.0 or out_of_curve_controller.state.applied_thrust_n != 0.0:
 		push_error("Out-of-range aerodynamic Mach did not reject step without partial state mutation")
+		return 1
+	return 0
+
+func _check_bounded_telemetry_retention() -> int:
+	var recorder := ReeveTelemetryRecorder.new()
+	recorder.max_samples = 4
+	var state := ReeveFlightState.new()
+	state.mass_kg = 1.0
+	for index in range(20):
+		state.time_s = float(index) * 0.1
+		state.position_m.y = float(index)
+		recorder.record(state, ReeveAtmosphere.sample(0.0), 0.0)
+	if recorder.samples.size() > 4 or recorder.samples.size() < 2:
+		push_error("Telemetry retention did not remain within its configured bound")
+		return 1
+	var previous_time := -INF
+	for sample in recorder.samples:
+		var sample_time: float = float(sample.time_s)
+		if sample_time <= previous_time:
+			push_error("Telemetry decimation broke chronological sample ordering")
+			return 1
+		previous_time = sample_time
+	if absf(float(recorder.samples[recorder.samples.size() - 1].time_s) - 1.9) > 0.000001:
+		push_error("Telemetry decimation discarded the newest sample")
 		return 1
 	return 0

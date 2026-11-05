@@ -189,6 +189,7 @@ func _load_workshop_vehicle() -> void:
 		status_label.text = "Workshop handoff rejected: %s" % str(handoff.get("error", "unknown error"))
 		return
 	workshop_configuration = loaded
+	_apply_workshop_visual(handoff)
 	status_label.text = "LOADED — %s | %.3f kg | frontal area %.4f m². Cd and propulsion remain unspecified." % [
 		str(handoff.vehicle_name),
 		float(handoff.total_mass_kg),
@@ -276,6 +277,45 @@ func _export_json() -> void:
 		return
 	var result: Error = simulation.telemetry.export_json("user://reeve_telemetry.json")
 	status_label.text = "JSON exported to user://reeve_telemetry.json" if result == OK else "JSON export failed: %s" % error_string(result)
+
+func _apply_workshop_visual(handoff: Dictionary) -> void:
+	var fuselage := $RocketVisual/Fuselage as MeshInstance3D
+	var nose := $RocketVisual/NoseCone as MeshInstance3D
+	var fuselage_mesh := fuselage.mesh as CylinderMesh
+	var nose_mesh := nose.mesh as CylinderMesh
+	var radius_m: float = float(handoff.fuselage_diameter_m) * 0.5
+	var length_m: float = float(handoff.fuselage_length_m)
+	fuselage_mesh.top_radius = radius_m
+	fuselage_mesh.bottom_radius = radius_m
+	fuselage_mesh.height = length_m
+	fuselage.position.y = length_m * 0.5
+	var nose_height_m: float = maxf(radius_m * 3.2, 0.15)
+	nose_mesh.top_radius = 0.0
+	nose_mesh.bottom_radius = radius_m
+	nose_mesh.height = nose_height_m
+	nose.position.y = length_m + nose_height_m * 0.5
+	for child in $RocketVisual.get_children():
+		if str(child.name).begins_with("WorkshopFin_"):
+			$RocketVisual.remove_child(child)
+			child.free()
+	var fin_count: int = int(handoff.get("fin_count", 0))
+	var fin_span_m: float = float(handoff.get("fin_span_m", 0.0))
+	var fin_chord_m: float = float(handoff.get("fin_chord_m", 0.0))
+	var fin_thickness_m: float = float(handoff.get("fin_thickness_m", 0.0))
+	if fin_count <= 0 or fin_span_m <= 0.0 or fin_chord_m <= 0.0 or fin_thickness_m <= 0.0:
+		return
+	for fin_index in range(fin_count):
+		var fin := MeshInstance3D.new()
+		fin.name = "WorkshopFin_%d" % fin_index
+		var fin_mesh := BoxMesh.new()
+		fin_mesh.size = Vector3(fin_span_m, fin_chord_m, fin_thickness_m)
+		fin.mesh = fin_mesh
+		var fin_mount := Node3D.new()
+		fin_mount.name = "WorkshopFinMount_%d" % fin_index
+		fin_mount.position = Vector3(radius_m + fin_span_m * 0.5, fin_chord_m * 0.5, 0.0)
+		fin_mount.rotation.y = TAU * float(fin_index) / float(fin_count)
+		$RocketVisual.add_child(fin_mount)
+		fin_mount.add_child(fin)
 
 func _start_gravity_drop() -> void:
 	var initial_mass_kg: float = 25.0

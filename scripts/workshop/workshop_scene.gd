@@ -4,6 +4,9 @@ extends Node3D
 var body_length: SpinBox
 var body_diameter: SpinBox
 var wall_thickness: SpinBox
+var fin_count: SpinBox
+var fin_span: SpinBox
+var fin_chord: SpinBox
 var material_select: OptionButton
 var mass_label: Label
 var rocket_visual: Node3D
@@ -73,6 +76,9 @@ func _build_interface() -> void:
 	body_length = _add_spinbox(column, "Body length (m)", 0.5, 12.0, 4.5, 0.1, 2)
 	body_diameter = _add_spinbox(column, "Outer diameter (m)", 0.05, 1.0, 0.56, 0.01, 2)
 	wall_thickness = _add_spinbox(column, "Wall thickness (m)", 0.0005, 0.02, 0.002, 0.0005, 4)
+	fin_count = _add_spinbox(column, "Fin count", 3.0, 6.0, 4.0, 1.0, 0)
+	fin_span = _add_spinbox(column, "Fin span (m)", 0.05, 0.5, 0.18, 0.01, 2)
+	fin_chord = _add_spinbox(column, "Fin chord (m)", 0.1, 1.0, 0.35, 0.01, 2)
 
 	var material_label := Label.new()
 	material_label.text = "Material"
@@ -111,7 +117,7 @@ func _build_interface() -> void:
 	)
 	column.add_child(return_button)
 
-	for control in [body_length, body_diameter, wall_thickness]:
+	for control in [body_length, body_diameter, wall_thickness, fin_count, fin_span, fin_chord]:
 		control.value_changed.connect(_on_parameters_changed)
 
 func _add_spinbox(parent: VBoxContainer, label_text: String, minimum: float, maximum: float, initial: float, step: float, decimals: int) -> SpinBox:
@@ -185,6 +191,21 @@ func _update_model() -> void:
 	nose.material_override = shell_material
 	rocket_visual.add_child(nose)
 
+	for fin_index in range(int(fin_count.value)):
+		var angle: float = TAU * float(fin_index) / float(fin_count.value)
+		var fin_mesh := BoxMesh.new()
+		fin_mesh.size = Vector3(fin_span.value, fin_chord.value, fin_thickness_m)
+		var fin := MeshInstance3D.new()
+		fin.mesh = fin_mesh
+		fin.position = Vector3(
+			cos(angle) * (radius + fin_span.value * 0.5),
+			fin_chord.value * 0.5,
+			sin(angle) * (radius + fin_span.value * 0.5)
+		)
+		fin.rotation.y = -angle
+		fin.material_override = shell_material
+		rocket_visual.add_child(fin)
+
 func _save_configuration() -> void:
 	var save_error := configuration.save_to_file("user://reeve_vehicle.json")
 	if save_error == OK:
@@ -201,13 +222,26 @@ func _load_configuration() -> void:
 	if loaded.components.is_empty():
 		mass_label.text += "\nConfiguration contains no components."
 		return
-	var component: ReeveRocketComponent = loaded.components[0]
-	if component.geometry_type != "cylinder_shell":
+	var component: ReeveRocketComponent = null
+	var saved_fin: ReeveRocketComponent = null
+	var saved_fin_count: int = 0
+	for saved_component in loaded.components:
+		if saved_component.geometry_type == "cylinder_shell" and component == null:
+			component = saved_component
+		elif str(saved_component.component_id).begins_with("fin_"):
+			saved_fin_count += 1
+			if saved_fin == null:
+				saved_fin = saved_component
+	if component == null:
 		mass_label.text += "\nFirst component is not a supported fuselage shell."
 		return
 	body_length.value = float(component.dimensions_m.get("length", body_length.value))
 	body_diameter.value = float(component.dimensions_m.get("outer_radius", body_diameter.value * 0.5)) * 2.0
 	wall_thickness.value = float(component.dimensions_m.get("wall_thickness", wall_thickness.value))
+	if saved_fin != null:
+		fin_count.value = saved_fin_count
+		fin_span.value = float(saved_fin.dimensions_m.get("width", fin_span.value))
+		fin_chord.value = float(saved_fin.dimensions_m.get("length", fin_chord.value))
 	for index in range(material_select.item_count):
 		if str(material_select.get_item_metadata(index)) == component.material_id:
 			material_select.select(index)

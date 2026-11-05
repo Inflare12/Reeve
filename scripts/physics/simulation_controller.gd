@@ -155,8 +155,6 @@ func _validate_model(initial_state: ReeveFlightState, supplied_model: Dictionary
 		if inertia.x <= 0.0 or inertia.y <= 0.0 or inertia.z <= 0.0:
 			return "Positive diagonal inertia values are required for rotational dynamics."
 	if supplied_model.has("ground_altitude_m"):
-		return "Thrust direction must contain finite values."
-	if supplied_model.has("ground_altitude_m"):
 		var ground_altitude: float = float(supplied_model.ground_altitude_m)
 		if not is_finite(ground_altitude):
 			return "Ground altitude must be finite."

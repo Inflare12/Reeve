@@ -66,7 +66,7 @@ func _initialize() -> void:
 		pressure_scale.value = 1.1
 
 	var camera_selector := instance.find_child("CameraModeSelector", true, false) as OptionButton
-	if camera_selector == null or camera_selector.item_count != 4:
+	if camera_selector == null or camera_selector.item_count != 6:
 		push_error("Flight Lab camera mode selector is missing or incomplete")
 		failures += 1
 	else:

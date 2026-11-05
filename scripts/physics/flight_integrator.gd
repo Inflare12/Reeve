@@ -34,6 +34,30 @@ static func step(
 	model: Dictionary,
 	wind_velocity_m_s: Vector3 = Vector3.ZERO
 ) -> bool:
+	if state == null:
+		return false
+	var candidate := state.duplicate_state()
+	if not _step_mutating(candidate, dt_s, model, wind_velocity_m_s):
+		return false
+	state.time_s = candidate.time_s
+	state.position_m = candidate.position_m
+	state.velocity_m_s = candidate.velocity_m_s
+	state.acceleration_m_s2 = candidate.acceleration_m_s2
+	state.orientation = candidate.orientation
+	state.angular_velocity_rad_s = candidate.angular_velocity_rad_s
+	state.angular_acceleration_rad_s2 = candidate.angular_acceleration_rad_s2
+	state.mass_kg = candidate.mass_kg
+	state.propellant_remaining_kg = candidate.propellant_remaining_kg
+	state.applied_thrust_n = candidate.applied_thrust_n
+	state.applied_mass_flow_kg_s = candidate.applied_mass_flow_kg_s
+	return true
+
+static func _step_mutating(
+	state: ReeveFlightState,
+	dt_s: float,
+	model: Dictionary,
+	wind_velocity_m_s: Vector3
+) -> bool:
 	if dt_s <= 0.0 or dt_s > 0.1 or not is_finite(dt_s) or not state.is_valid():
 		return false
 
@@ -125,7 +149,6 @@ static func step(
 	var consumed: float = minf(mass_flow_kg_s * dt_s, minf(state.propellant_remaining_kg, available_mass_above_dry))
 	state.applied_mass_flow_kg_s = consumed / dt_s
 	state.propellant_remaining_kg -= consumed
-	state.applied_mass_flow_kg_s = consumed / dt_s
 	state.mass_kg = maxf(dry_mass_kg, state.mass_kg - consumed)
 	state.velocity_m_s += old_acceleration * dt_s
 	state.position_m += state.velocity_m_s * dt_s

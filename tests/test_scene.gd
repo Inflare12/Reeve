@@ -60,6 +60,27 @@ func _initialize() -> void:
 			if absf(simulation.state.time_s - before_step - simulation.fixed_dt_s) > 0.000001:
 				push_error("Flight Lab single-step control did not advance exactly one physics step")
 				failures += 1
+			var slower_button := instance.get_node("CanvasLayer/Panel/Info/SlowerButton") as Button
+			var faster_button := instance.get_node("CanvasLayer/Panel/Info/FasterButton") as Button
+			slower_button.pressed.emit()
+			if absf(float(instance.get("time_scale")) - 0.5) > 0.000001:
+				push_error("Flight Lab slower time-scale control failed")
+				failures += 1
+			faster_button.pressed.emit()
+			if absf(float(instance.get("time_scale")) - 1.0) > 0.000001:
+				push_error("Flight Lab faster time-scale control failed")
+				failures += 1
+			var csv_button := instance.get_node("CanvasLayer/Panel/Info/ExportCsvButton") as Button
+			var json_button := instance.get_node("CanvasLayer/Panel/Info/ExportJsonButton") as Button
+			csv_button.pressed.emit()
+			json_button.pressed.emit()
+			if not FileAccess.file_exists("user://reeve_telemetry.csv") or not FileAccess.file_exists("user://reeve_telemetry.json"):
+				push_error("Flight Lab telemetry export buttons did not create both files")
+				failures += 1
+			if FileAccess.file_exists("user://reeve_telemetry.csv"):
+				DirAccess.remove_absolute(ProjectSettings.globalize_path("user://reeve_telemetry.csv"))
+			if FileAccess.file_exists("user://reeve_telemetry.json"):
+				DirAccess.remove_absolute(ProjectSettings.globalize_path("user://reeve_telemetry.json"))
 
 	instance.queue_free()
 	if failures == 0:

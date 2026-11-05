@@ -27,7 +27,7 @@ Implemented foundations:
 - A fixed-step simulation controller with a bounded catch-up accumulator, validated model inputs and optional ground-contact event.
 - An educational recovery model with altitude-triggered supplied parachute drag, terminal descent speed estimate and explicit limitations.
 - Live gravity-only drop demonstration with position, speed, acceleration, wind-relative dynamic pressure, mass and time telemetry.
-- Flight Lab controls for horizontal wind velocity, pause/resume, exact single-step execution, bounded simulation time scaling, and CSV/JSON telemetry export.
+- Flight Lab controls for horizontal wind velocity, temperature offset, pressure scaling, pause/resume, exact single-step execution, bounded simulation time scaling, and CSV/JSON telemetry export.
 - Telemetry samples with CSV and unit-labelled JSON export; Mach and dynamic pressure are computed from air-relative velocity including the configured wind vector. JSON exports also include state-triggered mission events such as apogee, descent and ground contact.
 - Live five-channel telemetry plots for altitude, velocity, acceleration, dynamic pressure and mass, driven by recorded simulation samples.
 - Basic analytical checks and model documentation.

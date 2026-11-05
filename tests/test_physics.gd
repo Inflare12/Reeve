@@ -354,6 +354,19 @@ func _check_profile_drives_flight() -> int:
 	if absf(controller.state.mass_kg - (10.0 - expected_consumption)) > 0.000001 or absf(controller.state.propellant_remaining_kg - (2.0 - expected_consumption)) > 0.000001:
 		push_error("Supplied propulsion profile mass flow was not applied")
 		return 1
+	for _step in range(140):
+		if not controller.step_once():
+			break
+	var found_powered_start := false
+	var found_cutoff := false
+	for event in controller.telemetry.events:
+		if str(event.event) == "powered_flight_start":
+			found_powered_start = true
+		elif str(event.event) == "engine_cutoff":
+			found_cutoff = true
+	if not found_powered_start or not found_cutoff:
+		push_error("Supplied thrust profile did not produce powered-flight start and engine-cutoff events")
+		return 1
 	return 0
 
 func _check_telemetry_json_export() -> int:
@@ -519,6 +532,31 @@ func _check_mission_events() -> int:
 		return 1
 	if controller.running:
 		push_error("Mission event detector did not stop after ground contact")
+		return 1
+	var recovery_state := ReeveFlightState.new()
+	recovery_state.position_m.y = 100.01
+	recovery_state.velocity_m_s.y = -5.0
+	recovery_state.mass_kg = 1.0
+	var recovery_controller := ReeveSimulationController.new()
+	var recovery_model := {
+		"dry_mass_kg": 1.0,
+		"drag_coefficient": 0.0,
+		"reference_area_m2": 0.0,
+		"recovery": {
+			"deployment_altitude_m": 100.0,
+			"canopy_area_m2": 1.0,
+			"drag_coefficient": 1.5
+		}
+	}
+	if not recovery_controller.configure(recovery_state, recovery_model) or not recovery_controller.step_once():
+		push_error("Recovery event test could not advance the configured descent")
+		return 1
+	var found_recovery_deployment := false
+	for event in recovery_controller.telemetry.events:
+		if str(event.event) == "recovery_deployment":
+			found_recovery_deployment = true
+	if not found_recovery_deployment:
+		push_error("Recovery deployment event was not recorded when descent crossed its altitude condition")
 		return 1
 	return 0
 

@@ -15,7 +15,7 @@ func _initialize() -> void:
 		push_error("Workshop should own a dynamically created camera, not a duplicated fixed node")
 		failures += 1
 	var spinboxes := instance.find_children("*", "SpinBox", true, false)
-	if spinboxes.size() != 3:
+	if spinboxes.size() != 6:
 		push_error("Workshop did not create its three geometry controls")
 		failures += 1
 	var material_options := instance.find_children("*", "OptionButton", true, false)
@@ -25,7 +25,7 @@ func _initialize() -> void:
 	var labels := instance.find_children("*", "Label", true, false)
 	var found_mass := false
 	for label in labels:
-		if label.text.contains("Estimated shell mass"):
+		if label.text.contains("Estimated fuselage mass") and label.text.contains("Estimated fin set mass"):
 			found_mass = true
 	if not found_mass:
 		push_error("Workshop did not calculate an initial shell mass")

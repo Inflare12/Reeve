@@ -90,6 +90,20 @@ func _initialize() -> void:
 	workshop_shell.geometry_type = "cylinder_shell"
 	workshop_shell.material_id = "aluminium_6061_t6"
 	workshop_shell.dimensions_m = {"outer_radius": 0.1, "wall_thickness": 0.002, "length": 2.0}
+	var workshop_fin_mass_kg: float = 0.0
+	for fin_index in range(4):
+		var workshop_fin := ReeveRocketComponent.new()
+		workshop_fin.component_id = "fin_%d" % fin_index
+		workshop_fin.display_name = "Test fin %d" % fin_index
+		workshop_fin.category = "Stabilizing surfaces"
+		workshop_fin.geometry_type = "rectangular_plate"
+		workshop_fin.material_id = "aluminium_6061_t6"
+		workshop_fin.dimensions_m = {"length": 0.35, "width": 0.25, "thickness": 0.002}
+		if not workshop_config.add_component(workshop_fin):
+			push_error("Could not prepare workshop fin fixture")
+			failures += 1
+		else:
+			workshop_fin_mass_kg += workshop_fin.calculate_mass_kg()
 	var workshop_payload := ReeveRocketComponent.new()
 	workshop_payload.component_id = "mass_payload"
 	workshop_payload.display_name = "Payload"
@@ -123,8 +137,14 @@ func _initialize() -> void:
 		elif absf(simulation.wind_velocity_m_s.x - 10.0) > 0.000001 or absf(simulation.wind_velocity_m_s.z + 2.0) > 0.000001:
 			push_error("Flight Lab wind controls were not passed into the simulation")
 			failures += 1
-		elif absf(simulation.state.mass_kg - (workshop_shell.calculate_mass_kg() + 2.5)) > 0.000001 or float(simulation.model.drag_coefficient) != 0.0:
+		elif absf(simulation.state.mass_kg - (workshop_shell.calculate_mass_kg() + workshop_fin_mass_kg + 2.5)) > 0.000001 or float(simulation.model.drag_coefficient) != 0.0:
 			push_error("Flight Lab did not transfer workshop mass or incorrectly invented drag coefficient")
+			failures += 1
+		elif absf(float((instance.get_node("RocketVisual/Fuselage") as MeshInstance3D).mesh as CylinderMesh).height - 2.0) > 0.000001:
+			push_error("Workshop fuselage length was not transferred to the Flight Lab visual")
+			failures += 1
+		elif instance.find_children("WorkshopFin_*", "MeshInstance3D", true, false).size() != 4:
+			push_error("Workshop fin geometry was not transferred to the Flight Lab visual")
 			failures += 1
 		elif absf(float(simulation.model.atmosphere_conditions.temperature_offset_k) - 5.0) > 0.000001 or absf(float(simulation.model.atmosphere_conditions.pressure_scale) - 1.1) > 0.000001:
 			push_error("Flight Lab atmosphere controls were not passed into the simulation")

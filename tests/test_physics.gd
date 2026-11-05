@@ -11,6 +11,7 @@ func _initialize() -> void:
 	failures += _check_mass_accounting()
 	failures += _check_fixed_step_controller()
 	failures += _check_controller_input_validation()
+	failures += _check_integrated_aerodynamic_moment()
 	failures += _check_component_mass()
 	failures += _check_invalid_component_dimensions()
 	failures += _check_configuration_rollup()
@@ -821,5 +822,55 @@ func _check_static_margin_estimate() -> int:
 	var invalid := ReeveStabilityEstimate.calculate_static_margin(1.0, 2.0, 0.0)
 	if bool(invalid.get("ok", true)):
 		push_error("Static-margin calculation accepted zero reference diameter")
+		return 1
+	return 0
+
+func _check_integrated_aerodynamic_moment() -> int:
+	var state := ReeveFlightState.new()
+	state.position_m.y = 100.0
+	state.velocity_m_s = Vector3(10.0, 0.0, 0.0)
+	state.mass_kg = 10.0
+	var model := {
+		"dry_mass_kg": 10.0,
+		"drag_coefficient": 0.0,
+		"reference_area_m2": 0.0,
+		"inertia_diagonal_kg_m2": Vector3.ONE,
+		"aerodynamic_model": {
+			"reference_area_m2": 0.1,
+			"characteristic_length_m": 1.0,
+			"drag_curve": [
+				{"mach": 0.0, "cd": 0.5},
+				{"mach": 2.0, "cd": 0.4}
+			],
+			"lift_slope_per_rad": 0.0,
+			"center_of_pressure_offset_body_m": Vector3(0.0, 0.0, 1.0)
+		}
+	}
+	var controller := ReeveSimulationController.new()
+	if not controller.configure(state, model):
+		push_error("Controller rejected valid coupled aerodynamic configuration: %s" % controller.last_error)
+		return 1
+	if not controller.step_once():
+		push_error("Coupled aerodynamic flight step failed: %s" % controller.last_error)
+		return 1
+	if controller.state.acceleration_m_s2.x >= 0.0 or controller.state.angular_acceleration_rad_s2.y >= 0.0:
+		push_error("Aerodynamic drag or CP-offset moment was not coupled into rigid-body state")
+		return 1
+	var invalid_state := ReeveFlightState.new()
+	invalid_state.mass_kg = 1.0
+	var invalid_controller := ReeveSimulationController.new()
+	var invalid_model := {
+		"dry_mass_kg": 1.0,
+		"aerodynamic_model": {
+			"reference_area_m2": 0.1,
+			"characteristic_length_m": 1.0,
+			"drag_curve": [
+				{"mach": 0.0, "cd": 0.5},
+				{"mach": 0.0, "cd": 0.4}
+			]
+		}
+	}
+	if invalid_controller.configure(invalid_state, invalid_model):
+		push_error("Controller accepted a non-monotonic aerodynamic drag curve")
 		return 1
 	return 0

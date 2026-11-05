@@ -17,3 +17,7 @@ The main Flight Lab includes a deterministic gravity-only drop demonstration to 
 The demonstration is not a rocket launch and does not represent a propulsion system. It is a gravity/drag integration check. The model stops and records a ground-contact state when the simulated position crosses the configured ground altitude.
 
 Use the Rocket Workshop to change conceptual geometry and material assumptions. The current Flight Lab demo does not yet automatically transfer the workshop configuration into a flight model.
+
+## Mission event log
+
+The simulation controller records timestamped events in the telemetry JSON output: simulation start, powered-flight start, engine cutoff, apogee, descent start, recovery deployment and ground contact. Events are detected from state transitions rather than a pre-scripted timeline. The current model does not include event logic for every real-world mission operation.

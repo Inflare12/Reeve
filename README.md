@@ -20,7 +20,7 @@ Implemented foundations:
 - A documented approximate lower-atmosphere model (troposphere and lower stratosphere), including Sutherland-law dynamic viscosity.
 - A coefficient-driven aerodynamic module calculating Mach, dynamic pressure, Reynolds number, drag and supplied-slope lift without inventing vehicle coefficients.
 - Validated external propulsion-curve reader with linear interpolation, impulse integration and explicit source-quality labels; the simulation controller can apply the supplied thrust and mass-flow samples to the flight model.
-- A deterministic translational flight model with gravity, supplied thrust, quadratic drag, quaternion attitude, diagonal-inertia angular dynamics and body-frame thrust direction.
+- A translational and rotational rigid-body foundation with gravity, supplied thrust, quadratic drag, quaternion attitude, diagonal-inertia angular dynamics and body-frame thrust direction.
 - A fixed-step simulation controller with a bounded catch-up accumulator, validated model inputs and optional ground-contact event.
 - An educational recovery model with altitude-triggered supplied parachute drag, terminal descent speed estimate and explicit limitations.
 - Live gravity-only drop demonstration with position, speed, acceleration, wind-relative dynamic pressure, mass and time telemetry.
@@ -80,6 +80,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     docs/flight_demo.md
     docs/propulsion_profile.md
     docs/recovery_model.md
+    docs/rotational_dynamics.md
 
 ## Model limitations
 

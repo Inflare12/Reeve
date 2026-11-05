@@ -17,6 +17,7 @@ func _initialize() -> void:
 	failures += _check_flight_handoff_data()
 	failures += _check_configuration_serialization()
 	failures += _check_aerodynamic_force_model()
+	failures += _check_attitude_coupled_aerodynamics()
 	failures += _check_ground_contact_event()
 	failures += _check_supplied_propulsion_profile()
 	failures += _check_profile_drives_flight()
@@ -199,6 +200,42 @@ func _check_aerodynamic_force_model() -> int:
 	var outside := ReeveAerodynamics.interpolate_drag_coefficient(3.0, curve)
 	if bool(outside.get("ok", true)):
 		push_error("Aerodynamic model should reject extrapolation outside supplied data")
+		return 1
+	return 0
+
+func _check_attitude_coupled_aerodynamics() -> int:
+	var state := ReeveFlightState.new()
+	state.position_m.y = 100.0
+	state.velocity_m_s = Vector3(0.0, 0.0, 100.0)
+	state.mass_kg = 1000.0
+	var model := {
+		"dry_mass_kg": 1000.0,
+		"aerodynamic_model": {
+			"drag_curve": [
+				{"mach": 0.0, "cd": 0.5},
+				{"mach": 1.0, "cd": 0.5}
+			],
+			"reference_area_m2": 1.0,
+			"characteristic_length_m": 2.0,
+			"lift_slope_per_rad": 2.0
+		}
+	}
+	var controller := ReeveSimulationController.new()
+	if not controller.configure(state, model):
+		push_error("Controller rejected valid attitude-coupled aerodynamic configuration: %s" % controller.last_error)
+		return 1
+	if not controller.step_once():
+		push_error("Attitude-coupled aerodynamic step failed")
+		return 1
+	if controller.state.acceleration_m_s2.y <= 0.0:
+		push_error("Body-axis angle of attack did not produce the expected positive lift component")
+		return 1
+	if controller.state.acceleration_m_s2.z >= 0.0:
+		push_error("Supplied aerodynamic drag curve did not oppose airflow")
+		return 1
+	var invalid_controller := ReeveSimulationController.new()
+	if invalid_controller.configure(state, {"dry_mass_kg": 1000.0, "aerodynamic_model": {"drag_curve": [], "reference_area_m2": 1.0, "characteristic_length_m": 1.0}}):
+		push_error("Controller accepted an aerodynamic model without a supplied coefficient curve")
 		return 1
 	return 0
 

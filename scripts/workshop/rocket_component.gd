@@ -20,12 +20,20 @@ func validate() -> String:
 		return "Unknown material ID: %s" % material_id
 	match geometry_type:
 		"cylinder_shell":
+			for key in ["outer_radius", "wall_thickness", "length"]:
+				var value: float = float(dimensions_m.get(key, NAN))
+				if not is_finite(value):
+					return "Cylinder shell dimensions must be finite."
 			var radius: float = float(dimensions_m.get("outer_radius", 0.0))
 			var thickness: float = float(dimensions_m.get("wall_thickness", 0.0))
 			var length: float = float(dimensions_m.get("length", 0.0))
 			if radius <= 0.0 or thickness <= 0.0 or length <= 0.0 or thickness >= radius:
 				return "Cylinder shell requires positive radius, thickness and length; thickness must be less than radius."
 		"rectangular_plate":
+			for key in ["length", "width", "thickness"]:
+				var value: float = float(dimensions_m.get(key, NAN))
+				if not is_finite(value):
+					return "Plate dimensions must be finite."
 			if float(dimensions_m.get("length", 0.0)) <= 0.0 or float(dimensions_m.get("width", 0.0)) <= 0.0 or float(dimensions_m.get("thickness", 0.0)) <= 0.0:
 				return "Plate length, width and thickness must be positive."
 		"user_mass":

@@ -25,7 +25,7 @@ Implemented foundations:
 - An educational recovery model with altitude-triggered supplied parachute drag, terminal descent speed estimate and explicit limitations.
 - Live gravity-only drop demonstration with position, speed, acceleration, wind-relative dynamic pressure, mass and time telemetry.
 - Flight Lab controls for pause/resume, exact single-step execution, bounded simulation time scaling, and CSV/JSON telemetry export.
-- Telemetry samples with CSV and unit-labelled JSON export; Mach and dynamic pressure are computed from air-relative velocity including the configured wind vector.
+- Telemetry samples with CSV and unit-labelled JSON export; Mach and dynamic pressure are computed from air-relative velocity including the configured wind vector. JSON exports also include state-triggered mission events such as apogee, descent and ground contact.
 - Basic analytical checks and model documentation.
 
 Not yet implemented: full 6-DOF rigid-body dynamics, aerodynamic stability derivatives, validated thermal/structural analysis, vehicle workshop, recovery, advanced weather, or a professional telemetry UI. These must not be inferred from the current scaffold.

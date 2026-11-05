@@ -70,6 +70,57 @@ static func step(
 			area = vehicle_cd_area + recovery_cd_area
 
 	state.applied_thrust_n = thrust_n
+	var aerodynamic_force_world := Vector3.ZERO
+	if model.has("aerodynamic_model"):
+		var aerodynamic_configuration: Variant = model.get("aerodynamic_model")
+		if not aerodynamic_configuration is Dictionary:
+			return false
+		var relative_air_velocity: Vector3 = state.velocity_m_s - wind_velocity_m_s
+		var body_axis_world: Vector3 = state.orientation * Vector3.UP
+		var flow_speed: float = relative_air_velocity.length()
+		var angle_of_attack_rad: float = 0.0
+		var lift_direction_world := Vector3.ZERO
+		if flow_speed > 0.000001:
+			var flow_direction: Vector3 = relative_air_velocity / flow_speed
+			angle_of_attack_rad = acos(clampf(body_axis_world.normalized().dot(flow_direction), -1.0, 1.0))
+			lift_direction_world = body_axis_world - flow_direction * body_axis_world.dot(flow_direction)
+		var drag_curve: Array[Dictionary] = []
+		for point in aerodynamic_configuration.get("drag_curve", []):
+			if point is Dictionary:
+				drag_curve.append(point)
+		var aerodynamic_result := ReeveAerodynamics.calculate_forces(
+			relative_air_velocity,
+			float(atmosphere.density_kg_m3),
+			float(atmosphere.dynamic_viscosity_pa_s),
+			float(atmosphere.speed_of_sound_m_s),
+			float(aerodynamic_configuration.get("reference_area_m2", area)),
+			float(aerodynamic_configuration.get("characteristic_length_m", 1.0)),
+			drag_curve,
+			angle_of_attack_rad,
+			float(aerodynamic_configuration.get("lift_slope_per_rad", 0.0)),
+			lift_direction_world
+		)
+		if not bool(aerodynamic_result.get("ok", false)):
+			return false
+		aerodynamic_force_world = aerodynamic_result.total_aerodynamic_force_n
+		var recovery_area: float = 0.0
+		if recovery_configuration is Dictionary and not recovery_configuration.is_empty():
+			if ReeveRecoveryModel.is_deployed(state.position_m.y, state.velocity_m_s.y, recovery_configuration):
+				recovery_area = float(recovery_configuration.drag_coefficient) * float(recovery_configuration.canopy_area_m2)
+		if recovery_area > 0.0 and flow_speed > 0.000001:
+			var density: float = float(atmosphere.density_kg_m3)
+			aerodynamic_force_world += -0.5 * density * recovery_area * flow_speed * relative_air_velocity
+		var gravity_force_acceleration := Vector3.DOWN * ReeveAtmosphere.gravity_at_altitude(state.position_m.y)
+		var old_acceleration := (thrust_direction.normalized() * thrust_n + aerodynamic_force_world) / maxf(state.mass_kg, 0.000001) + gravity_force_acceleration
+		state.applied_thrust_n = thrust_n
+		var available_mass_above_dry: float = maxf(state.mass_kg - dry_mass_kg, 0.0)
+		var consumed: float = minf(mass_flow_kg_s * dt_s, minf(state.propellant_remaining_kg, available_mass_above_dry))
+		state.propellant_remaining_kg -= consumed
+		state.mass_kg = maxf(dry_mass_kg, state.mass_kg - consumed)
+		state.velocity_m_s += old_acceleration * dt_s
+		state.position_m += state.velocity_m_s * dt_s
+		state.acceleration_m_s2 = old_acceleration
+		return _integrate_rotation(state, dt_s, model)
 	var old_acceleration := calculate_acceleration(
 		state, thrust_n, thrust_direction, cd, area, wind_velocity_m_s, atmosphere
 	)
@@ -82,16 +133,17 @@ static func step(
 	state.position_m += state.velocity_m_s * dt_s
 	state.acceleration_m_s2 = old_acceleration
 
+	if not _integrate_rotation(state, dt_s, model):
+		return false
+	return state.is_valid()
+
+static func _integrate_rotation(state: ReeveFlightState, dt_s: float, model: Dictionary) -> bool:
 	var inertia: Vector3 = model.get("inertia_diagonal_kg_m2", Vector3.ZERO)
 	var applied_moment_body: Vector3 = model.get("body_moment_nm", Vector3.ZERO)
 	if applied_moment_body.length_squared() > 0.0 or inertia.length_squared() > 0.0 or state.angular_velocity_rad_s.length_squared() > 0.0:
 		if not inertia.is_finite() or inertia.x <= 0.0 or inertia.y <= 0.0 or inertia.z <= 0.0 or not applied_moment_body.is_finite():
 			return false
-		var angular_momentum_body := Vector3(
-			inertia.x * state.angular_velocity_rad_s.x,
-			inertia.y * state.angular_velocity_rad_s.y,
-			inertia.z * state.angular_velocity_rad_s.z
-		)
+		var angular_momentum_body := Vector3(inertia.x * state.angular_velocity_rad_s.x, inertia.y * state.angular_velocity_rad_s.y, inertia.z * state.angular_velocity_rad_s.z)
 		var gyroscopic_moment_body := state.angular_velocity_rad_s.cross(angular_momentum_body)
 		state.angular_acceleration_rad_s2 = Vector3(
 			(applied_moment_body.x - gyroscopic_moment_body.x) / inertia.x,
@@ -103,6 +155,5 @@ static func step(
 		if angular_speed > 0.0000001:
 			var body_rotation := Quaternion(state.angular_velocity_rad_s / angular_speed, angular_speed * dt_s)
 			state.orientation = (state.orientation * body_rotation).normalized()
-
 	state.time_s += dt_s
 	return state.is_valid()

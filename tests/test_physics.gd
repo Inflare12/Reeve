@@ -260,6 +260,7 @@ func _check_profile_drives_flight() -> int:
 		"propulsion_profile": profile
 	}
 	var controller := ReeveSimulationController.new()
+	controller.max_substeps_per_frame = 20
 	if not controller.configure(state, model):
 		push_error("Simulation controller rejected a valid supplied propulsion profile")
 		return 1

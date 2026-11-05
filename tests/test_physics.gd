@@ -24,6 +24,7 @@ func _initialize() -> void:
 	failures += _check_mission_events()
 	failures += _check_quaternion_rigid_body_dynamics()
 	failures += _check_time_varying_wind()
+	failures += _check_structural_axial_estimate()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -535,5 +536,32 @@ func _check_time_varying_wind() -> int:
 		return 1
 	if controller.telemetry.samples.is_empty() or absf(float(controller.telemetry.samples[0].relative_air_speed_m_s) - absf(controller.state.velocity_m_s.y)) > 0.000001:
 		push_error("Controller did not cancel matching horizontal wind and retain vertical air-relative velocity")
+		return 1
+	return 0
+
+func _check_structural_axial_estimate() -> int:
+	var result := ReeveStructuralEstimate.calculate_axial_tension(
+		"aluminium_6061_t6", 0.001, 1.0, 1000.0
+	)
+	if not bool(result.get("ok", false)):
+		push_error("Valid axial tension estimate was rejected")
+		return 1
+	if absf(float(result.axial_stress_pa) - 1.0e6) > 0.001:
+		push_error("Axial stress calculation is incorrect")
+		return 1
+	var expected_strain: float = 1.0e6 / 68.9e9
+	if absf(float(result.elastic_strain) - expected_strain) > 1.0e-12 or absf(float(result.elastic_deformation_m) - expected_strain) > 1.0e-12:
+		push_error("Linear-elastic strain or deformation calculation is incorrect")
+		return 1
+	if str(result.strength_basis) != "nominal_yield_strength" or absf(float(result.reference_strength_factor) - 276.0) > 0.000001:
+		push_error("Metal yield reference factor is incorrect")
+		return 1
+	var composite := ReeveStructuralEstimate.calculate_axial_tension("carbon_fibre_generic", 0.001, 1.0, 1000.0)
+	if not bool(composite.get("ok", false)) or str(composite.strength_basis) != "nominal_ultimate_tensile_strength":
+		push_error("Composite tensile reference strength basis was not labelled correctly")
+		return 1
+	var invalid := ReeveStructuralEstimate.calculate_axial_tension("aluminium_6061_t6", 0.0, 1.0, 100.0)
+	if bool(invalid.get("ok", true)):
+		push_error("Structural estimate accepted zero cross-sectional area")
 		return 1
 	return 0

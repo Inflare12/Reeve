@@ -20,7 +20,8 @@ Implemented foundations:
 - A documented approximate lower-atmosphere model (troposphere and lower stratosphere), including Sutherland-law dynamic viscosity.
 - A coefficient-driven aerodynamic module calculating Mach, dynamic pressure, Reynolds number, drag and supplied-slope lift without inventing vehicle coefficients.
 - A deterministic point-mass translational flight model with gravity, supplied thrust, and quadratic drag.
-- A fixed-step simulation controller with a bounded catch-up accumulator.
+- A fixed-step simulation controller with a bounded catch-up accumulator and optional ground-contact event.
+- Live gravity-only drop demonstration with position, speed, acceleration, dynamic-pressure, mass and time telemetry.
 - Telemetry samples and CSV export.
 - Basic analytical checks and model documentation.
 
@@ -71,6 +72,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     tests/test_physics.gd
     docs/model_assumptions.md
     docs/aerodynamics_model.md
+    docs/flight_demo.md
 
 ## Model limitations
 

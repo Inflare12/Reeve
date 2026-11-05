@@ -47,6 +47,7 @@ static func step(
 	var cd: float = maxf(float(model.get("drag_coefficient", 0.5)), 0.0)
 	var area: float = maxf(float(model.get("reference_area_m2", 0.01)), 0.0)
 
+	state.applied_thrust_n = thrust_n
 	var old_acceleration := calculate_acceleration(
 		state, thrust_n, thrust_direction, cd, area, wind_velocity_m_s, atmosphere
 	)

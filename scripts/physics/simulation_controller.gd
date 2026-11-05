@@ -108,6 +108,13 @@ func _validate_model(initial_state: ReeveFlightState, supplied_model: Dictionary
 			var value: float = float(supplied_model[key])
 			if not is_finite(value) or value < 0.0:
 				return "%s must be finite and non-negative." % key
+	var recovery_configuration: Variant = supplied_model.get("recovery", {})
+	if not recovery_configuration is Dictionary:
+		return "Recovery configuration must be a Dictionary."
+	if not recovery_configuration.is_empty():
+		var recovery_error: String = ReeveRecoveryModel.validate(recovery_configuration)
+		if not recovery_error.is_empty():
+			return "Invalid recovery configuration: %s" % recovery_error
 	var direction: Vector3 = supplied_model.get("thrust_direction", Vector3.UP)
 	if not direction.is_finite():
 		return "Thrust direction must contain finite values."

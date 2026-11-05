@@ -84,6 +84,7 @@ func step_once() -> bool:
 		state.velocity_m_s = Vector3.ZERO
 		state.acceleration_m_s2 = Vector3.ZERO
 		ground_contact = true
+		running = false
 	var atmosphere := ReeveAtmosphere.sample(state.position_m.y)
 	if not bool(atmosphere.get("ok", false)):
 		last_error = "Telemetry atmosphere sample is outside the supported model domain."

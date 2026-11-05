@@ -22,7 +22,7 @@ func _initialize() -> void:
 	if material_options.size() != 1:
 		push_error("Workshop material selector is missing")
 		failures += 1
-	if instance.get_node_or_null("SaveAndOpenFlightLabButton") == null:
+	if instance.find_child("SaveAndOpenFlightLabButton", true, false) == null:
 		push_error("Workshop save-and-handoff button is missing")
 		failures += 1
 	var component_lists := instance.find_children("*", "ItemList", true, false)

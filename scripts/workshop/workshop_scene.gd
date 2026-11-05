@@ -158,9 +158,26 @@ func _update_model() -> void:
 	var mass: float = component.calculate_mass_kg()
 	configuration.components.clear()
 	configuration.add_component(component)
+	var fin_thickness_m: float = 0.005
+	var fin_masses: float = 0.0
+	for fin_index in range(int(fin_count.value)):
+		var fin_component := ReeveRocketComponent.new()
+		fin_component.component_id = "fin_%d" % fin_index
+		fin_component.display_name = "Fin %d" % (fin_index + 1)
+		fin_component.category = "Stabilizing surfaces"
+		fin_component.material_id = material_id
+		fin_component.geometry_type = "rectangular_plate"
+		fin_component.dimensions_m = {
+			"length": fin_chord.value,
+			"width": fin_span.value,
+			"thickness": fin_thickness_m
+		}
+		configuration.add_component(fin_component)
+		fin_masses += fin_component.calculate_mass_kg()
 	var material := ReeveMaterialCatalog.get_material(material_id)
-	mass_label.text = "Estimated shell mass: %.3f kg\nMaterial density: %.0f kg/m³\nTotal modelled components: 1" % [
-		mass, float(material.density_kg_m3)
+	var total_mass: float = float(configuration.get_mass_breakdown().total_mass_kg)
+	mass_label.text = "Estimated fuselage mass: %.3f kg\nEstimated fin set mass: %.3f kg\nTotal modelled mass: %.3f kg\nMaterial density: %.0f kg/m³\nModelled components: %d" % [
+		mass, fin_masses, total_mass, float(material.density_kg_m3), 1 + int(fin_count.value)
 	]
 
 	for child in rocket_visual.get_children():

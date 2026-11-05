@@ -23,8 +23,9 @@ Implemented foundations:
 - A deterministic point-mass translational flight model with gravity, supplied thrust, and quadratic drag.
 - A fixed-step simulation controller with a bounded catch-up accumulator, validated model inputs and optional ground-contact event.
 - An educational recovery model with altitude-triggered supplied parachute drag, terminal descent speed estimate and explicit limitations.
-- Live gravity-only drop demonstration with position, speed, acceleration, dynamic-pressure, mass and time telemetry.
-- Telemetry samples with CSV and unit-labelled JSON export.
+- Live gravity-only drop demonstration with position, speed, acceleration, wind-relative dynamic pressure, mass and time telemetry.
+- Flight Lab controls for pause/resume, exact single-step execution, bounded simulation time scaling, and CSV/JSON telemetry export.
+- Telemetry samples with CSV and unit-labelled JSON export; Mach and dynamic pressure are computed from air-relative velocity including the configured wind vector.
 - Basic analytical checks and model documentation.
 
 Not yet implemented: full 6-DOF rigid-body dynamics, aerodynamic stability derivatives, validated thermal/structural analysis, vehicle workshop, recovery, advanced weather, or a professional telemetry UI. These must not be inferred from the current scaffold.

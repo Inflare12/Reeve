@@ -299,6 +299,7 @@ func _check_telemetry_json_export() -> int:
 	state.mass_kg = 7.5
 	var recorder := ReeveTelemetryRecorder.new()
 	recorder.record(state, ReeveAtmosphere.sample(2.0), 12.0)
+	recorder.record_event("test_event", state, {"verified": true})
 	var path := "user://reeve_telemetry_test.json"
 	var save_error := recorder.export_json(path)
 	if save_error != OK:
@@ -314,8 +315,8 @@ func _check_telemetry_json_export() -> int:
 	if not parsed is Dictionary or int(parsed.get("schema_version", 0)) != 1:
 		push_error("Telemetry JSON schema is invalid")
 		return 1
-	if parsed.get("samples", []).size() != 1 or parsed.get("units", {}).get("time", "") != "s":
-		push_error("Telemetry JSON sample or units metadata missing")
+	if parsed.get("samples", []).size() != 1 or parsed.get("units", {}).get("time", "") != "s" or parsed.get("events", []).size() != 1:
+		push_error("Telemetry JSON sample, event or units metadata missing")
 		return 1
 	return 0
 

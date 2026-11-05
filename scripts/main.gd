@@ -16,6 +16,9 @@ var pressure_scale_input: SpinBox
 var workshop_configuration: ReeveRocketConfiguration
 var camera_mode_selector: OptionButton
 var camera_mode: int = 0
+var propellant_mass_input: SpinBox
+var propulsion_profile: ReevePropulsionProfile
+var propulsion_file_dialog: FileDialog
 
 func _ready() -> void:
 	_build_flight_environment()
@@ -30,6 +33,8 @@ func _ready() -> void:
 	temperature_offset_input.name = "TemperatureOffsetInput"
 	pressure_scale_input = _add_environment_spinbox("Pressure scale", 0.5, 1.5, 1.0, 0.01)
 	pressure_scale_input.name = "PressureScaleInput"
+	propellant_mass_input = _add_environment_spinbox("User-supplied propellant mass (kg)", 0.0, 10000.0, 0.0, 0.1)
+	propellant_mass_input.name = "PropellantMassInput"
 	camera_mode_selector = OptionButton.new()
 	camera_mode_selector.name = "CameraModeSelector"
 	for camera_mode_name in ["External Chase", "Side Observation", "Ground Observation", "Rocket Follow", "Free Camera", "Engineering Inspection"]:
@@ -37,6 +42,20 @@ func _ready() -> void:
 	camera_mode_selector.select(0)
 	camera_mode_selector.item_selected.connect(_on_camera_mode_selected)
 	$CanvasLayer/Panel/Info.add_child(camera_mode_selector)
+
+	var profile_button := Button.new()
+	profile_button.name = "LoadPropulsionProfileButton"
+	profile_button.text = "Load Supplied Thrust Curve (JSON)"
+	profile_button.pressed.connect(_open_propulsion_file_dialog)
+	$CanvasLayer/Panel/Info.add_child(profile_button)
+
+	propulsion_file_dialog = FileDialog.new()
+	propulsion_file_dialog.name = "PropulsionProfileFileDialog"
+	propulsion_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	propulsion_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	propulsion_file_dialog.filters = PackedStringArray(["*.json ; REEVE supplied propulsion profile"])
+	propulsion_file_dialog.file_selected.connect(_on_propulsion_profile_selected)
+	add_child(propulsion_file_dialog)
 
 	var gravity_button := Button.new()
 	gravity_button.name = "GravityDropButton"
@@ -177,6 +196,23 @@ func _add_environment_spinbox(label_text: String, minimum: float, maximum: float
 	container.add_child(spin)
 	$CanvasLayer/Panel/Info.add_child(container)
 	return spin
+
+func _open_propulsion_file_dialog() -> void:
+	propulsion_file_dialog.popup_centered_ratio(0.75)
+
+func _on_propulsion_profile_selected(path: String) -> void:
+	var loaded_profile := ReevePropulsionProfile.new()
+	var load_error: Error = loaded_profile.load_json(path)
+	if load_error != OK:
+		status_label.text = "Propulsion profile rejected: %s" % error_string(load_error)
+		return
+	propulsion_profile = loaded_profile
+	status_label.text = "PROFILE LOADED — %s | %s | impulse %.3f N·s | integrated mass %.3f kg" % [
+		propulsion_profile.profile_name,
+		propulsion_profile.data_quality,
+		propulsion_profile.total_impulse_ns(),
+		propulsion_profile.integrated_propellant_mass_kg()
+	]
 
 func _load_workshop_vehicle() -> void:
 	var loaded := ReeveRocketConfiguration.new()
@@ -319,7 +355,7 @@ func _apply_workshop_visual(handoff: Dictionary) -> void:
 		fin_mount.add_child(fin)
 
 func _start_gravity_drop() -> void:
-	var initial_mass_kg: float = 25.0
+	var dry_mass_kg: float = 25.0
 	var reference_area_m2: float = PI * 0.28 * 0.28
 	var drag_coefficient: float = 0.5
 	if workshop_configuration != null:
@@ -327,18 +363,26 @@ func _start_gravity_drop() -> void:
 		if not bool(handoff.get("ok", false)):
 			status_label.text = "Workshop handoff became invalid: %s" % str(handoff.get("error", "unknown error"))
 			return
-		initial_mass_kg = float(handoff.total_mass_kg)
+		dry_mass_kg = float(handoff.total_mass_kg)
 		reference_area_m2 = float(handoff.frontal_reference_area_m2)
 		# Unknown vehicle Cd must not be fabricated; use a drag-free mass-transfer test.
 		drag_coefficient = 0.0
+	var propellant_mass_kg: float = propellant_mass_input.value
+	if propellant_mass_kg > 0.0 and propulsion_profile == null:
+		status_label.text = "Propellant mass was entered but no supplied thrust profile is loaded."
+		return
+	if propulsion_profile != null and propellant_mass_kg <= 0.0:
+		status_label.text = "A supplied thrust profile is loaded; enter a positive propellant mass before running."
+		return
+	var initial_mass_kg: float = dry_mass_kg + propellant_mass_kg
 	var initial_state := ReeveFlightState.new()
 	initial_state.position_m = Vector3(0.0, 20.0, 0.0)
 	initial_state.mass_kg = initial_mass_kg
-	initial_state.propellant_remaining_kg = 0.0
+	initial_state.propellant_remaining_kg = propellant_mass_kg
 	var model := {
 		"thrust_n": 0.0,
 		"mass_flow_kg_s": 0.0,
-		"dry_mass_kg": initial_mass_kg,
+		"dry_mass_kg": dry_mass_kg,
 		"drag_coefficient": drag_coefficient,
 		"reference_area_m2": reference_area_m2,
 		"ground_altitude_m": 0.0,
@@ -347,11 +391,13 @@ func _start_gravity_drop() -> void:
 			"pressure_scale": pressure_scale_input.value
 		}
 	}
+	if propulsion_profile != null:
+		model["propulsion_profile"] = propulsion_profile
 	var wind_velocity_m_s := Vector3(wind_x_input.value, 0.0, wind_z_input.value)
 	if not simulation.configure(initial_state, model, wind_velocity_m_s):
 		status_label.text = "Could not start test: %s" % simulation.last_error
 		return
-	status_label.text = "RUNNING — gravity-only drop test" if workshop_configuration == null else "RUNNING — workshop mass-transfer check; drag disabled because Cd is unknown"
+	status_label.text = "RUNNING — supplied thrust-curve simulation" if propulsion_profile != null else ("RUNNING — gravity-only drop test" if workshop_configuration == null else "RUNNING — workshop mass-transfer check; drag disabled because Cd is unknown")
 	_update_flight_display()
 
 func _reset_demonstration() -> void:

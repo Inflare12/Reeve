@@ -46,3 +46,26 @@ func export_csv(path: String) -> Error:
 		file.store_line(",".join(row))
 	file.close()
 	return OK
+
+func export_json(path: String) -> Error:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	var payload := {
+		"schema_version": 1,
+		"units": {
+			"time": "s",
+			"position": "m",
+			"velocity": "m/s",
+			"acceleration": "m/s^2",
+			"mass": "kg",
+			"thrust": "N",
+			"pressure": "Pa",
+			"density": "kg/m^3",
+			"temperature": "K"
+		},
+		"samples": samples
+	}
+	file.store_string(JSON.stringify(payload, "\t"))
+	file.close()
+	return OK

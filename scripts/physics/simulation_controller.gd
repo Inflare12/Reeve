@@ -186,6 +186,7 @@ func _validate_model(initial_state: ReeveFlightState, supplied_model: Dictionary
 		var cp_offset: Vector3 = aerodynamic_configuration.get("center_of_pressure_offset_body_m", Vector3.ZERO)
 		if not cp_offset.is_finite():
 			return "Aerodynamic center-of-pressure offset must contain finite values."
+	var aerodynamic_cp_offset_for_inertia: Vector3 = Vector3.ZERO
 	var aerodynamic_configuration: Variant = supplied_model.get("aerodynamic_model", {})
 	if not aerodynamic_configuration is Dictionary:
 		return "Aerodynamic model configuration must be a Dictionary."
@@ -194,6 +195,7 @@ func _validate_model(initial_state: ReeveFlightState, supplied_model: Dictionary
 		var aero_length: float = float(aerodynamic_configuration.get("characteristic_length_m", NAN))
 		var lift_slope: float = float(aerodynamic_configuration.get("lift_slope_per_rad", 0.0))
 		var cp_offset: Vector3 = aerodynamic_configuration.get("center_of_pressure_offset_body_m", Vector3.ZERO)
+		aerodynamic_cp_offset_for_inertia = cp_offset
 		if not is_finite(aero_area) or aero_area <= 0.0 or not is_finite(aero_length) or aero_length <= 0.0 or not is_finite(lift_slope) or not cp_offset.is_finite():
 			return "Aerodynamic area, characteristic length, lift slope and CP offset must be finite and geometry must be positive."
 		var supplied_drag_curve: Variant = aerodynamic_configuration.get("drag_curve", [])

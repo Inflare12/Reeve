@@ -889,4 +889,26 @@ func _check_integrated_aerodynamic_moment() -> int:
 	if cp_without_inertia.configure(invalid_state, cp_model):
 		push_error("Controller accepted an aerodynamic CP offset without rotational inertia")
 		return 1
+	var out_of_curve_state := ReeveFlightState.new()
+	out_of_curve_state.position_m.y = 100.0
+	out_of_curve_state.velocity_m_s = Vector3(1000.0, 0.0, 0.0)
+	out_of_curve_state.mass_kg = 2.0
+	var out_of_curve_model := {
+		"dry_mass_kg": 2.0,
+		"aerodynamic_model": {
+			"reference_area_m2": 0.1,
+			"characteristic_length_m": 1.0,
+			"drag_curve": [
+				{"mach": 0.0, "cd": 0.5},
+				{"mach": 0.5, "cd": 0.4}
+			]
+		}
+	}
+	var out_of_curve_controller := ReeveSimulationController.new()
+	if not out_of_curve_controller.configure(out_of_curve_state, out_of_curve_model):
+		push_error("Controller rejected valid low-Mach aerodynamic curve configuration")
+		return 1
+	if out_of_curve_controller.step_once() or out_of_curve_controller.state.time_s != 0.0 or out_of_curve_controller.state.mass_kg != 2.0 or out_of_curve_controller.state.applied_thrust_n != 0.0:
+		push_error("Out-of-range aerodynamic Mach did not reject step without partial state mutation")
+		return 1
 	return 0

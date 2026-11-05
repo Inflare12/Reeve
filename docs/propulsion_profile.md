@@ -24,3 +24,5 @@ A profile must identify its source and conditions before its results can be inte
 ## Flight Lab workflow
 
 The Flight Lab can load this JSON profile through its file picker. The user must separately enter propellant mass. The workshop vehicle mass is treated as dry mass; the initial wet mass is dry mass plus the user-entered propellant mass. A loaded profile with zero propellant mass is rejected, and non-zero propellant mass without a loaded profile is also rejected. The profile is played back as supplied data; it is not generated or validated as a real engine curve.
+
+During playback, REEVE records actual capped mass flow from the integrator and derives instantaneous specific impulse as `Isp = thrust / (mass_flow * g0)`, with effective exhaust velocity `ve = Isp * g0`. These derived values are meaningful only to the extent that the supplied thrust and mass-flow series are consistent and sourced.

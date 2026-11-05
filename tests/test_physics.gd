@@ -21,6 +21,7 @@ func _initialize() -> void:
 	failures += _check_telemetry_json_export()
 	failures += _check_recovery_model()
 	failures += _check_wind_relative_telemetry()
+	failures += _check_mission_events()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -404,5 +405,43 @@ func _check_wind_relative_telemetry() -> int:
 		return 1
 	if absf(float(sample.horizontal_velocity_m_s) - 10.0) > 0.000001 or absf(float(sample.wind_speed_m_s) - 10.0) > 0.000001:
 		push_error("Horizontal velocity or wind telemetry is incorrect")
+		return 1
+	return 0
+
+func _check_mission_events() -> int:
+	var state := ReeveFlightState.new()
+	state.position_m.y = 100.0
+	state.velocity_m_s.y = 10.0
+	state.mass_kg = 1.0
+	var controller := ReeveSimulationController.new()
+	var model := {
+		"dry_mass_kg": 1.0,
+		"drag_coefficient": 0.0,
+		"reference_area_m2": 0.0,
+		"ground_altitude_m": 0.0
+	}
+	if not controller.configure(state, model):
+		push_error("Mission event test could not configure simulation")
+		return 1
+	for _frame in range(100):
+		controller.advance_frame(controller.fixed_dt_s * 8.0)
+		if controller.ground_contact:
+			break
+	var found_apogee := false
+	var found_descent := false
+	var found_ground := false
+	for event in controller.telemetry.events:
+		match str(event.event):
+			"apogee":
+				found_apogee = true
+			"descent_start":
+				found_descent = true
+			"ground_contact":
+				found_ground = true
+	if not found_apogee or not found_descent or not found_ground:
+		push_error("Mission event detector missed apogee, descent or ground contact")
+		return 1
+	if controller.running:
+		push_error("Mission event detector did not stop after ground contact")
 		return 1
 	return 0

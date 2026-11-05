@@ -109,7 +109,7 @@ func step_once() -> bool:
 		ground_contact = true
 		running = false
 		telemetry.record_event("ground_contact", state, {
-			"impact_velocity_m_s": impact_velocity_m_s,
+			"impact_velocity_m_s": [impact_velocity_m_s.x, impact_velocity_m_s.y, impact_velocity_m_s.z],
 			"impact_speed_m_s": impact_velocity_m_s.length()
 		})
 	var atmosphere := ReeveAtmosphere.sample(state.position_m.y)

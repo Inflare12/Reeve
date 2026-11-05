@@ -38,9 +38,9 @@ func _build_environment() -> void:
 	var camera := Camera3D.new()
 	camera.name = "WorkshopCamera"
 	camera.position = Vector3(8.0, 5.0, 10.0)
-	camera.look_at(Vector3(0.0, 2.0, 0.0), Vector3.UP)
 	camera.current = true
 	add_child(camera)
+	camera.look_at(Vector3(0.0, 2.0, 0.0), Vector3.UP)
 
 	var ground := MeshInstance3D.new()
 	var plane := PlaneMesh.new()

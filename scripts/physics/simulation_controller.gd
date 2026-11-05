@@ -75,7 +75,7 @@ func advance_frame(frame_delta_s: float, time_scale: float = 1.0) -> int:
 			ground_contact = true
 			running = false
 		var atmosphere := ReeveAtmosphere.sample(state.position_m.y)
-		telemetry.record(state, atmosphere, state.applied_thrust_n)
+		telemetry.record(state, atmosphere, state.applied_thrust_n, wind_velocity_m_s)
 		accumulator_s -= fixed_dt_s
 		steps += 1
 		if ground_contact:

@@ -70,6 +70,16 @@ func _initialize() -> void:
 		push_error("Flight Lab camera mode selector is missing or incomplete")
 		failures += 1
 	else:
+		camera_selector.select(4)
+		camera_selector.item_selected.emit(4)
+		var free_camera_position: Vector3 = camera.position
+		var move_key := InputEventKey.new()
+		move_key.pressed = true
+		move_key.keycode = KEY_W
+		instance.call("_unhandled_input", move_key)
+		if camera.position.distance_to(free_camera_position) < 0.1:
+			push_error("Free camera keyboard movement did not move the camera")
+			failures += 1
 		camera_selector.select(1)
 		camera_selector.item_selected.emit(1)
 

@@ -14,6 +14,7 @@ func _initialize() -> void:
 	failures += _check_aerodynamic_force_model()
 	failures += _check_ground_contact_event()
 	failures += _check_supplied_propulsion_profile()
+	failures += _check_profile_drives_flight()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -237,5 +238,36 @@ func _check_supplied_propulsion_profile() -> int:
 	]
 	if invalid.validate().is_empty():
 		push_error("Non-monotonic propulsion curve was accepted")
+		return 1
+	return 0
+
+func _check_profile_drives_flight() -> int:
+	var profile := ReevePropulsionProfile.new()
+	profile.profile_name = "Synthetic integration test"
+	profile.data_quality = "synthetic_test"
+	profile.source_description = "Unit test only; not a real motor curve."
+	profile.points = [
+		{"time_s": 0.0, "thrust_n": 100.0, "mass_flow_kg_s": 0.1},
+		{"time_s": 1.0, "thrust_n": 100.0, "mass_flow_kg_s": 0.1}
+	]
+	var state := ReeveFlightState.new()
+	state.mass_kg = 10.0
+	state.propellant_remaining_kg = 2.0
+	var model := {
+		"dry_mass_kg": 8.0,
+		"drag_coefficient": 0.0,
+		"reference_area_m2": 0.0,
+		"propulsion_profile": profile
+	}
+	var controller := ReeveSimulationController.new()
+	if not controller.configure(state, model):
+		push_error("Simulation controller rejected a valid supplied propulsion profile")
+		return 1
+	controller.advance_frame(0.1)
+	if absf(controller.state.applied_thrust_n - 100.0) > 0.000001:
+		push_error("Supplied propulsion profile thrust was not applied")
+		return 1
+	if absf(controller.state.mass_kg - 9.99) > 0.000001 or absf(controller.state.propellant_remaining_kg - 1.99) > 0.000001:
+		push_error("Supplied propulsion profile mass flow was not applied")
 		return 1
 	return 0

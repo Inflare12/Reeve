@@ -11,6 +11,7 @@ This repository was empty when the initial project scaffold was created. The fir
 Implemented foundations:
 - Component records for cylindrical shells, rectangular plates, and user-entered masses.
 - Interactive 3D Rocket Workshop with editable fuselage length, diameter, wall thickness and material selection.
+- Vehicle configuration save/load to the Godot user-data directory (`user://reeve_vehicle.json`).
 - Initial material catalogue with explicitly approximate reference properties.
 - Vehicle component collection, duplicate-ID checks, and mass breakdown by category.
 - JSON vehicle configuration save/load support.
@@ -42,6 +43,8 @@ The initial scene is a lightweight 3D flight-test visualization. The physics cor
 The tests directory contains GDScript validation scripts. Run them with the Godot executable in headless mode:
 
     godot --headless --path . --script tests/test_physics.gd
+    godot --headless --path . --script tests/test_scene.gd
+    godot --headless --path . --script tests/test_workshop.gd
 
 If the executable is named godot4, substitute that command. A successful parser run is not a substitute for validating the numerical model against independent reference cases.
 

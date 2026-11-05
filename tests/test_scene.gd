@@ -65,6 +65,14 @@ func _initialize() -> void:
 		temperature_offset.value = 5.0
 		pressure_scale.value = 1.1
 
+	var camera_selector := instance.find_child("CameraModeSelector", true, false) as OptionButton
+	if camera_selector == null or camera_selector.item_count != 4:
+		push_error("Flight Lab camera mode selector is missing or incomplete")
+		failures += 1
+	else:
+		camera_selector.select(1)
+		camera_selector.item_selected.emit(1)
+
 	var workshop_config := ReeveRocketConfiguration.new()
 	var workshop_shell := ReeveRocketComponent.new()
 	workshop_shell.component_id = "main_fuselage"
@@ -98,6 +106,9 @@ func _initialize() -> void:
 		var simulation: ReeveSimulationController = instance.get("simulation")
 		if simulation == null or simulation.state == null or simulation.state.time_s <= 0.0:
 			push_error("Gravity-only demonstration did not advance physics")
+			failures += 1
+		elif camera == null or camera.position.distance_to(simulation.state.position_m + Vector3(0.0, 5.0, 24.0)) > 0.000001:
+			push_error("Side observation camera mode did not position the camera correctly")
 			failures += 1
 		elif absf(simulation.wind_velocity_m_s.x - 10.0) > 0.000001 or absf(simulation.wind_velocity_m_s.z + 2.0) > 0.000001:
 			push_error("Flight Lab wind controls were not passed into the simulation")

@@ -38,6 +38,8 @@ static func step(
 		return false
 
 	var atmosphere: Dictionary = ReeveAtmosphere.sample(state.position_m.y)
+	if not bool(atmosphere.get("ok", false)):
+		return false
 	var dry_mass_kg: float = maxf(float(model.get("dry_mass_kg", 0.001)), 0.001)
 	var thrust_n: float = maxf(float(model.get("thrust_n", 0.0)), 0.0)
 	var mass_flow_kg_s: float = maxf(float(model.get("mass_flow_kg_s", 0.0)), 0.0)

@@ -112,7 +112,8 @@ func step_once() -> bool:
 			"impact_velocity_m_s": [impact_velocity_m_s.x, impact_velocity_m_s.y, impact_velocity_m_s.z],
 			"impact_speed_m_s": impact_velocity_m_s.length()
 		})
-	var atmosphere := ReeveAtmosphere.sample(state.position_m.y)
+	var atmosphere_conditions: Dictionary = model.get("atmosphere_conditions", {})
+	var atmosphere := ReeveAtmosphere.sample(state.position_m.y, atmosphere_conditions)
 	if not bool(atmosphere.get("ok", false)):
 		last_error = "Telemetry atmosphere sample is outside the supported model domain."
 		return false
@@ -145,6 +146,13 @@ func _validate_model(initial_state: ReeveFlightState, supplied_model: Dictionary
 			var value: float = float(supplied_model[key])
 			if not is_finite(value) or value < 0.0:
 				return "%s must be finite and non-negative." % key
+	var atmosphere_configuration: Variant = supplied_model.get("atmosphere_conditions", {})
+	if not atmosphere_configuration is Dictionary:
+		return "Atmosphere conditions must be a Dictionary."
+	var temperature_offset: float = float(atmosphere_configuration.get("temperature_offset_k", 0.0))
+	var pressure_scale: float = float(atmosphere_configuration.get("pressure_scale", 1.0))
+	if not is_finite(temperature_offset) or not is_finite(pressure_scale) or pressure_scale <= 0.0:
+		return "Atmosphere temperature offset must be finite and pressure scale finite and positive."
 	var wind_configuration: Variant = supplied_model.get("wind_model", {})
 	if not wind_configuration is Dictionary:
 		return "Wind model configuration must be a Dictionary."

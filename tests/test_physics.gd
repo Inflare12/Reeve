@@ -22,6 +22,7 @@ func _initialize() -> void:
 	failures += _check_recovery_model()
 	failures += _check_wind_relative_telemetry()
 	failures += _check_mission_events()
+	failures += _check_quaternion_rigid_body_dynamics()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -443,5 +444,48 @@ func _check_mission_events() -> int:
 		return 1
 	if controller.running:
 		push_error("Mission event detector did not stop after ground contact")
+		return 1
+	return 0
+
+
+func _check_quaternion_rigid_body_dynamics() -> int:
+	var state := ReeveFlightState.new()
+	state.position_m.y = 100.0
+	state.mass_kg = 1.0
+	var model := {
+		"dry_mass_kg": 1.0,
+		"drag_coefficient": 0.0,
+		"reference_area_m2": 0.0,
+		"inertia_diagonal_kg_m2": Vector3(2.0, 3.0, 4.0),
+		"body_moment_nm": Vector3(0.0, 0.0, 8.0)
+	}
+	if not ReeveFlightIntegrator.step(state, 0.01, model):
+		push_error("Rigid-body angular integration rejected valid inputs")
+		return 1
+	if absf(state.angular_acceleration_rad_s2.z - 2.0) > 0.000001 or absf(state.angular_velocity_rad_s.z - 0.02) > 0.000001:
+		push_error("Rigid-body angular acceleration or velocity is incorrect")
+		return 1
+	if absf(state.orientation.length() - 1.0) > 0.000001:
+		push_error("Quaternion attitude lost unit length")
+		return 1
+	var rotated_state := ReeveFlightState.new()
+	rotated_state.position_m.y = 100.0
+	rotated_state.mass_kg = 1.0
+	rotated_state.orientation = Quaternion(Vector3.BACK, PI * 0.5)
+	var thrust_model := {
+		"dry_mass_kg": 1.0,
+		"thrust_n": 10.0,
+		"thrust_direction_body": Vector3.UP,
+		"drag_coefficient": 0.0,
+		"reference_area_m2": 0.0
+	}
+	if not ReeveFlightIntegrator.step(rotated_state, 0.01, thrust_model) or rotated_state.acceleration_m_s2.x <= 0.0:
+		push_error("Body-frame thrust direction did not follow quaternion attitude")
+		return 1
+	var invalid_controller := ReeveSimulationController.new()
+	var invalid_state := ReeveFlightState.new()
+	invalid_state.mass_kg = 1.0
+	if invalid_controller.configure(invalid_state, {"dry_mass_kg": 1.0, "body_moment_nm": Vector3(1.0, 0.0, 0.0)}):
+		push_error("Controller accepted applied moment without a valid inertia tensor")
 		return 1
 	return 0

@@ -54,6 +54,9 @@ static func step(
 		thrust_n = 0.0
 		mass_flow_kg_s = 0.0
 	var thrust_direction: Vector3 = model.get("thrust_direction", Vector3.UP)
+	if model.has("thrust_direction_body"):
+		var body_direction: Vector3 = model.get("thrust_direction_body", Vector3.UP)
+		thrust_direction = state.orientation * body_direction.normalized()
 	var cd: float = maxf(float(model.get("drag_coefficient", 0.5)), 0.0)
 	var area: float = maxf(float(model.get("reference_area_m2", 0.01)), 0.0)
 	var recovery_configuration: Variant = model.get("recovery", {})
@@ -76,7 +79,29 @@ static func step(
 
 	state.velocity_m_s += old_acceleration * dt_s
 	state.position_m += state.velocity_m_s * dt_s
-	state.time_s += dt_s
 	state.acceleration_m_s2 = old_acceleration
 
+	var inertia: Vector3 = model.get("inertia_diagonal_kg_m2", Vector3.ZERO)
+	var applied_moment_body: Vector3 = model.get("body_moment_nm", Vector3.ZERO)
+	if applied_moment_body.length_squared() > 0.0 or inertia.length_squared() > 0.0:
+		if not inertia.is_finite() or inertia.x <= 0.0 or inertia.y <= 0.0 or inertia.z <= 0.0 or not applied_moment_body.is_finite():
+			return false
+		var angular_momentum_body := Vector3(
+			inertia.x * state.angular_velocity_rad_s.x,
+			inertia.y * state.angular_velocity_rad_s.y,
+			inertia.z * state.angular_velocity_rad_s.z
+		)
+		var gyroscopic_moment_body := state.angular_velocity_rad_s.cross(angular_momentum_body)
+		state.angular_acceleration_rad_s2 = Vector3(
+			(applied_moment_body.x - gyroscopic_moment_body.x) / inertia.x,
+			(applied_moment_body.y - gyroscopic_moment_body.y) / inertia.y,
+			(applied_moment_body.z - gyroscopic_moment_body.z) / inertia.z
+		)
+		state.angular_velocity_rad_s += state.angular_acceleration_rad_s2 * dt_s
+		var angular_speed: float = state.angular_velocity_rad_s.length()
+		if angular_speed > 0.0000001:
+			var body_rotation := Quaternion(state.angular_velocity_rad_s / angular_speed, angular_speed * dt_s)
+			state.orientation = (state.orientation * body_rotation).normalized()
+
+	state.time_s += dt_s
 	return state.is_valid()

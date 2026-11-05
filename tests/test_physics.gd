@@ -81,8 +81,18 @@ func _check_mass_accounting() -> int:
 		"reference_area_m2": 0.0
 	}
 	var ok := ReeveFlightIntegrator.step(state, 0.1, model)
-	if not ok or absf(state.mass_kg - 9.95) > 0.0001 or absf(state.propellant_remaining_kg - 1.95) > 0.0001:
-		push_error("Mass accounting check failed")
+	if not ok or absf(state.mass_kg - 9.95) > 0.0001 or absf(state.propellant_remaining_kg - 1.95) > 0.0001 or absf(state.applied_mass_flow_kg_s - 0.5) > 0.000001:
+		push_error("Mass accounting or actual mass-flow recording check failed")
+		return 1
+	var limited_state := ReeveFlightState.new()
+	limited_state.mass_kg = 10.0
+	limited_state.propellant_remaining_kg = 0.01
+	var limited_model := {"dry_mass_kg": 9.99, "mass_flow_kg_s": 1.0, "thrust_n": 0.0}
+	if not ReeveFlightIntegrator.step(limited_state, 0.1, limited_model):
+		push_error("Mass-limited flow step failed")
+		return 1
+	if absf(limited_state.propellant_remaining_kg) > 0.000001 or absf(limited_state.applied_mass_flow_kg_s - 0.1) > 0.000001:
+		push_error("Recorded mass flow did not reflect the amount actually consumed before dry mass")
 		return 1
 	return 0
 

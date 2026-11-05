@@ -20,6 +20,7 @@ Implemented foundations:
 - A documented approximate lower-atmosphere model (troposphere and lower stratosphere), including Sutherland-law dynamic viscosity and explicit out-of-domain rejection.
 - Optional deterministic three-axis sinusoidal wind/gust model sampled at every fixed physics step.
 - A coefficient-driven aerodynamic module calculating Mach, dynamic pressure, Reynolds number, drag and supplied-slope lift without inventing vehicle coefficients.
+- A static-margin calculator using explicitly user-supplied CG and CP positions and a documented coordinate convention.
 - A bounded linear-elastic axial tension estimate with explicit metal/composite strength-reference labels and engineering limitations.
 - A Biot-number-checked lumped-capacitance convective thermal response estimate using supplied heat-transfer inputs.
 - Validated external propulsion-curve reader with linear interpolation, impulse integration and explicit source-quality labels; the simulation controller can apply the supplied thrust and mass-flow samples to the flight model.
@@ -76,6 +77,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     scripts/physics/atmosphere.gd
     scripts/physics/wind_model.gd
     scripts/aerodynamics/aerodynamics.gd
+    scripts/aerodynamics/stability_estimate.gd
     scripts/propulsion/propulsion_profile.gd
     scripts/recovery/recovery_model.gd
     scripts/physics/flight_state.gd
@@ -86,6 +88,7 @@ If the executable is named godot4, substitute that command. A successful parser 
     tests/test_physics.gd
     docs/model_assumptions.md
     docs/aerodynamics_model.md
+    docs/static_margin.md
     docs/flight_demo.md
     docs/propulsion_profile.md
     docs/recovery_model.md

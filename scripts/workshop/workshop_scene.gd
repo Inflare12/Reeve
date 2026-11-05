@@ -10,6 +10,8 @@ var fin_chord: SpinBox
 var material_select: OptionButton
 var mass_label: Label
 var rocket_visual: Node3D
+var component_list: ItemList
+var component_mass_inputs: Dictionary = {}
 var configuration := ReeveRocketConfiguration.new()
 
 func _ready() -> void:
@@ -80,6 +82,23 @@ func _build_interface() -> void:
 	fin_span = _add_spinbox(column, "Fin span (m)", 0.05, 0.5, 0.18, 0.01, 2)
 	fin_chord = _add_spinbox(column, "Fin chord (m)", 0.1, 1.0, 0.35, 0.01, 2)
 
+	var component_heading := Label.new()
+	component_heading.text = "Additional component masses (user-entered kg)"
+	column.add_child(component_heading)
+	var mass_fields := {
+		"fuel_tank": "Fuel tank assembly mass",
+		"oxidizer_tank": "Oxidizer tank assembly mass",
+		"engine": "Engine assembly mass",
+		"payload": "Payload mass",
+		"avionics": "Avionics mass",
+		"recovery": "Recovery system mass",
+		"sensors": "External sensors mass",
+		"supports": "Internal supports mass"
+	}
+	for component_key in mass_fields:
+		var mass_input := _add_spinbox(column, str(mass_fields[component_key]), 0.0, 10000.0, 0.0, 0.1, 2)
+		component_mass_inputs[component_key] = mass_input
+
 	var material_label := Label.new()
 	material_label.text = "Material"
 	column.add_child(material_label)
@@ -94,6 +113,13 @@ func _build_interface() -> void:
 	mass_label = Label.new()
 	mass_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(mass_label)
+
+	var hierarchy_label := Label.new()
+	hierarchy_label.text = "Vehicle component hierarchy / mass inclusion"
+	column.add_child(hierarchy_label)
+	component_list = ItemList.new()
+	component_list.custom_minimum_size = Vector2(300.0, 130.0)
+	column.add_child(component_list)
 
 	var disclaimer := Label.new()
 	disclaimer.text = "Mass assumes a uniform cylindrical shell. No joints, reinforcements, cut-outs, loads or thermal qualification are modelled."
@@ -119,6 +145,8 @@ func _build_interface() -> void:
 
 	for control in [body_length, body_diameter, wall_thickness, fin_count, fin_span, fin_chord]:
 		control.value_changed.connect(_on_parameters_changed)
+	for mass_input in component_mass_inputs.values():
+		mass_input.value_changed.connect(_on_parameters_changed)
 
 func _add_spinbox(parent: VBoxContainer, label_text: String, minimum: float, maximum: float, initial: float, step: float, decimals: int) -> SpinBox:
 	var label := Label.new()
@@ -174,11 +202,42 @@ func _update_model() -> void:
 		}
 		configuration.add_component(fin_component)
 		fin_masses += fin_component.calculate_mass_kg()
+	var mass_categories := {
+		"fuel_tank": "Propellant tank representation",
+		"oxidizer_tank": "Oxidizer tank representation",
+		"engine": "Engine assembly",
+		"payload": "Payload",
+		"avionics": "Avionics compartment",
+		"recovery": "Recovery system",
+		"sensors": "External sensors",
+		"supports": "Structural supports"
+	}
+	for component_key in component_mass_inputs:
+		var entered_mass: float = float(component_mass_inputs[component_key].value)
+		if entered_mass <= 0.0:
+			continue
+		var mass_component := ReeveRocketComponent.new()
+		mass_component.component_id = "mass_%s" % component_key
+		mass_component.display_name = str(mass_categories[component_key])
+		mass_component.category = str(mass_categories[component_key])
+		mass_component.material_id = material_id
+		mass_component.geometry_type = "user_mass"
+		mass_component.user_mass_kg = entered_mass
+		configuration.add_component(mass_component)
 	var material := ReeveMaterialCatalog.get_material(material_id)
 	var total_mass: float = float(configuration.get_mass_breakdown().total_mass_kg)
-	mass_label.text = "Estimated fuselage mass: %.3f kg\nEstimated fin set mass: %.3f kg\nTotal modelled mass: %.3f kg\nMaterial density: %.0f kg/m³\nModelled components: %d" % [
-		mass, fin_masses, total_mass, float(material.density_kg_m3), 1 + int(fin_count.value)
+	var additional_mass: float = total_mass - mass - fin_masses
+	mass_label.text = "Estimated fuselage mass: %.3f kg\nEstimated fin set mass: %.3f kg\nUser-entered additional mass: %.3f kg\nTotal modelled mass: %.3f kg\nMaterial density: %.0f kg/m³\nMass-counted components: %d" % [
+		mass, fin_masses, additional_mass, total_mass, float(material.density_kg_m3), configuration.components.size()
 	]
+	component_list.clear()
+	component_list.add_item("Main fuselage shell — %.3f kg" % mass)
+	for fin_index in range(int(fin_count.value)):
+		component_list.add_item("Fin %d — included in mass" % (fin_index + 1))
+	for component_key in component_mass_inputs:
+		var entered_mass: float = float(component_mass_inputs[component_key].value)
+		var category_name: String = str(mass_categories[component_key])
+		component_list.add_item("%s — %.3f kg%s" % [category_name, entered_mass, "" if entered_mass > 0.0 else " (not included)"])
 
 	for child in rocket_visual.get_children():
 		child.queue_free()
@@ -223,6 +282,62 @@ func _update_model() -> void:
 		fin.material_override = shell_material
 		rocket_visual.add_child(fin)
 
+	# Distinct conceptual subassemblies are visualized separately. Their mass
+	# enters the bill of materials only when the user supplies a mass above.
+	var tank_material := _make_visual_material(Color(0.18, 0.48, 0.72))
+	var tank_mesh := CylinderMesh.new()
+	tank_mesh.top_radius = radius * 0.72
+	tank_mesh.bottom_radius = radius * 0.72
+	tank_mesh.height = body_length.value * 0.18
+	_add_visual_component("FuelTankVisual", tank_mesh, Vector3(0.0, body_length.value * 0.34, 0.0), tank_material)
+	var oxidizer_mesh := CylinderMesh.new()
+	oxidizer_mesh.top_radius = radius * 0.72
+	oxidizer_mesh.bottom_radius = radius * 0.72
+	oxidizer_mesh.height = body_length.value * 0.18
+	_add_visual_component("OxidizerTankVisual", oxidizer_mesh, Vector3(0.0, body_length.value * 0.58, 0.0), _make_visual_material(Color(0.22, 0.62, 0.48)))
+	var payload_mesh := BoxMesh.new()
+	payload_mesh.size = Vector3(radius * 1.15, body_length.value * 0.10, radius * 1.15)
+	_add_visual_component("PayloadVisual", payload_mesh, Vector3(0.0, body_length.value * 0.86, 0.0), _make_visual_material(Color(0.82, 0.68, 0.32)))
+	var avionics_mesh := BoxMesh.new()
+	avionics_mesh.size = Vector3(radius * 0.75, body_length.value * 0.07, radius * 0.75)
+	_add_visual_component("AvionicsVisual", avionics_mesh, Vector3(0.0, body_length.value * 0.72, 0.0), _make_visual_material(Color(0.38, 0.72, 0.76)))
+	var recovery_mesh := CylinderMesh.new()
+	recovery_mesh.top_radius = radius * 0.65
+	recovery_mesh.bottom_radius = radius * 0.65
+	recovery_mesh.height = body_length.value * 0.08
+	_add_visual_component("RecoveryVisual", recovery_mesh, Vector3(0.0, body_length.value * 0.65, 0.0), _make_visual_material(Color(0.72, 0.42, 0.52)))
+	var engine_mesh := CylinderMesh.new()
+	engine_mesh.top_radius = radius * 0.58
+	engine_mesh.bottom_radius = radius * 0.48
+	engine_mesh.height = radius * 0.55
+	_add_visual_component("EngineVisual", engine_mesh, Vector3(0.0, -radius * 0.28, 0.0), _make_visual_material(Color(0.48, 0.52, 0.58)))
+	var nozzle_mesh := CylinderMesh.new()
+	nozzle_mesh.top_radius = radius * 0.32
+	nozzle_mesh.bottom_radius = radius * 0.62
+	nozzle_mesh.height = radius * 0.65
+	_add_visual_component("NozzleVisual", nozzle_mesh, Vector3(0.0, -radius * 0.88, 0.0), _make_visual_material(Color(0.34, 0.37, 0.42)))
+	var sensor_mesh := SphereMesh.new()
+	sensor_mesh.radius = maxf(radius * 0.08, 0.005)
+	sensor_mesh.height = maxf(radius * 0.16, 0.01)
+	_add_visual_component("ExternalSensorVisual", sensor_mesh, Vector3(radius * 1.05, body_length.value * 0.42, 0.0), _make_visual_material(Color(0.9, 0.45, 0.2)))
+	var support_mesh := BoxMesh.new()
+	support_mesh.size = Vector3(radius * 1.3, body_length.value * 0.025, radius * 0.08)
+	_add_visual_component("StructuralSupportVisual", support_mesh, Vector3(0.0, body_length.value * 0.50, 0.0), _make_visual_material(Color(0.62, 0.65, 0.68)))
+
+func _make_visual_material(color: Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.55
+	return material
+
+func _add_visual_component(node_name: String, mesh: Mesh, position_m: Vector3, material: StandardMaterial3D) -> void:
+	var visual := MeshInstance3D.new()
+	visual.name = node_name
+	visual.mesh = mesh
+	visual.position = position_m
+	visual.material_override = material
+	rocket_visual.add_child(visual)
+
 func _save_configuration() -> void:
 	var save_error := configuration.save_to_file("user://reeve_vehicle.json")
 	if save_error == OK:
@@ -243,6 +358,10 @@ func _load_configuration() -> void:
 	var saved_fin: ReeveRocketComponent = null
 	var saved_fin_count: int = 0
 	for saved_component in loaded.components:
+		if str(saved_component.component_id).begins_with("mass_"):
+			var mass_key: String = str(saved_component.component_id).trim_prefix("mass_")
+			if component_mass_inputs.has(mass_key):
+				component_mass_inputs[mass_key].value = saved_component.user_mass_kg
 		if saved_component.geometry_type == "cylinder_shell" and component == null:
 			component = saved_component
 		elif str(saved_component.component_id).begins_with("fin_"):

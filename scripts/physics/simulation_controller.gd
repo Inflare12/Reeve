@@ -11,6 +11,7 @@ var max_substeps_per_frame: int = 8
 var accumulator_s: float = 0.0
 var running: bool = false
 var last_error: String = ""
+var ground_contact: bool = false
 
 func configure(
 	initial_state: ReeveFlightState,
@@ -31,7 +32,9 @@ func configure(
 	accumulator_s = 0.0
 	telemetry.clear()
 	running = true
+	ground_contact = false
 	last_error = ""
+	ground_contact = false
 	return true
 
 func advance_frame(frame_delta_s: float, time_scale: float = 1.0) -> int:
@@ -49,10 +52,19 @@ func advance_frame(frame_delta_s: float, time_scale: float = 1.0) -> int:
 			last_error = "Physics step rejected invalid state or timestep."
 			running = false
 			break
+		var ground_altitude_m: float = float(model.get("ground_altitude_m", -INF))
+		if state.position_m.y <= ground_altitude_m:
+			state.position_m.y = ground_altitude_m
+			state.velocity_m_s = Vector3.ZERO
+			state.acceleration_m_s2 = Vector3.ZERO
+			ground_contact = true
+			running = false
 		var atmosphere := ReeveAtmosphere.sample(state.position_m.y)
 		telemetry.record(state, atmosphere, state.applied_thrust_n)
 		accumulator_s -= fixed_dt_s
 		steps += 1
+		if ground_contact:
+			break
 	return steps
 
 func pause() -> void:

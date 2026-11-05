@@ -40,8 +40,8 @@ func _initialize() -> void:
 			push_error("Flight Lab control is missing: %s" % control_name)
 			failures += 1
 
-	var telemetry_panel := instance.get_node_or_null("CanvasLayer/TelemetryPanel") as PanelContainer
-	var altitude_plot := instance.get_node_or_null("CanvasLayer/TelemetryPanel/VBoxContainer/AltitudePlot") as ReeveTelemetryPlot
+	var telemetry_panel := instance.find_child("TelemetryPanel", true, false) as PanelContainer
+	var altitude_plot := instance.find_child("AltitudePlot", true, false) as ReeveTelemetryPlot
 	if telemetry_panel == null or altitude_plot == null:
 		push_error("Live telemetry dashboard or altitude plot is missing")
 		failures += 1

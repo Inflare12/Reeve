@@ -34,7 +34,6 @@ func configure(
 	running = true
 	ground_contact = false
 	last_error = ""
-	ground_contact = false
 	return true
 
 func advance_frame(frame_delta_s: float, time_scale: float = 1.0) -> int:
@@ -80,3 +79,4 @@ func reset() -> void:
 	accumulator_s = 0.0
 	telemetry.clear()
 	last_error = ""
+	ground_contact = false

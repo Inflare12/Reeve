@@ -217,8 +217,10 @@ func _check_attitude_coupled_aerodynamics() -> int:
 			],
 			"reference_area_m2": 1.0,
 			"characteristic_length_m": 2.0,
-			"lift_slope_per_rad": 2.0
-		}
+			"lift_slope_per_rad": 2.0,
+			"center_of_pressure_offset_body_m": Vector3.RIGHT
+		},
+		"inertia_diagonal_kg_m2": Vector3(1000.0, 1000.0, 1000.0)
 	}
 	var controller := ReeveSimulationController.new()
 	if not controller.configure(state, model):
@@ -233,9 +235,17 @@ func _check_attitude_coupled_aerodynamics() -> int:
 	if controller.state.acceleration_m_s2.z >= 0.0:
 		push_error("Supplied aerodynamic drag curve did not oppose airflow")
 		return 1
+	if controller.state.angular_acceleration_rad_s2.z <= 0.0:
+		push_error("Supplied centre-of-pressure offset did not create the expected aerodynamic moment")
+		return 1
 	var invalid_controller := ReeveSimulationController.new()
 	if invalid_controller.configure(state, {"dry_mass_kg": 1000.0, "aerodynamic_model": {"drag_curve": [], "reference_area_m2": 1.0, "characteristic_length_m": 1.0}}):
 		push_error("Controller accepted an aerodynamic model without a supplied coefficient curve")
+		return 1
+	var invalid_offset_model: Dictionary = model.duplicate(true)
+	invalid_offset_model.aerodynamic_model.center_of_pressure_offset_body_m = Vector3(NAN, 0.0, 0.0)
+	if ReeveSimulationController.new().configure(state, invalid_offset_model):
+		push_error("Controller accepted a non-finite aerodynamic centre-of-pressure offset")
 		return 1
 	var aligned_state := ReeveFlightState.new()
 	aligned_state.position_m.y = 100.0

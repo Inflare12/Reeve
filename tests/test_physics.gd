@@ -7,6 +7,7 @@ func _initialize() -> void:
 	failures += _check_gravity()
 	failures += _check_drag_opposes_motion()
 	failures += _check_mass_accounting()
+	failures += _check_fixed_step_controller()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -59,5 +60,19 @@ func _check_mass_accounting() -> int:
 	var ok := ReeveFlightIntegrator.step(state, 0.1, model)
 	if not ok or absf(state.mass_kg - 9.95) > 0.0001 or absf(state.propellant_remaining_kg - 1.95) > 0.0001:
 		push_error("Mass accounting check failed")
+		return 1
+	return 0
+
+func _check_fixed_step_controller() -> int:
+	var state := ReeveFlightState.new()
+	state.position_m = Vector3(0.0, 100.0, 0.0)
+	state.mass_kg = 1.0
+	var controller := ReeveSimulationController.new()
+	if not controller.configure(state, {"thrust_n": 0.0, "drag_coefficient": 0.0, "reference_area_m2": 0.0}):
+		push_error("Simulation controller configuration failed")
+		return 1
+	var steps := controller.advance_frame(1.0 / 60.0)
+	if steps != 2 or absf(controller.state.time_s - 1.0 / 60.0) > 0.000001:
+		push_error("Fixed-step accumulator did not execute the expected two steps")
 		return 1
 	return 0

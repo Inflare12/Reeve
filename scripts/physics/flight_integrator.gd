@@ -40,10 +40,18 @@ static func step(
 	var atmosphere: Dictionary = ReeveAtmosphere.sample(state.position_m.y)
 	var dry_mass_kg: float = maxf(float(model.get("dry_mass_kg", 0.001)), 0.001)
 	var thrust_n: float = maxf(float(model.get("thrust_n", 0.0)), 0.0)
+	var mass_flow_kg_s: float = maxf(float(model.get("mass_flow_kg_s", 0.0)), 0.0)
+	var supplied_profile: Variant = model.get("propulsion_profile", null)
+	if supplied_profile is ReevePropulsionProfile:
+		var profile_sample: Dictionary = supplied_profile.sample(state.time_s)
+		if not bool(profile_sample.get("ok", false)):
+			return false
+		thrust_n = maxf(float(profile_sample.thrust_n), 0.0)
+		mass_flow_kg_s = maxf(float(profile_sample.mass_flow_kg_s), 0.0)
 	if state.propellant_remaining_kg <= 0.0 or state.mass_kg <= dry_mass_kg:
 		thrust_n = 0.0
+		mass_flow_kg_s = 0.0
 	var thrust_direction: Vector3 = model.get("thrust_direction", Vector3.UP)
-	var mass_flow_kg_s: float = maxf(float(model.get("mass_flow_kg_s", 0.0)), 0.0)
 	var cd: float = maxf(float(model.get("drag_coefficient", 0.5)), 0.0)
 	var area: float = maxf(float(model.get("reference_area_m2", 0.01)), 0.0)
 

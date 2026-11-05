@@ -479,7 +479,7 @@ func _check_quaternion_rigid_body_dynamics() -> int:
 		"drag_coefficient": 0.0,
 		"reference_area_m2": 0.0
 	}
-	if not ReeveFlightIntegrator.step(rotated_state, 0.01, thrust_model) or rotated_state.acceleration_m_s2.x <= 0.0:
+	if not ReeveFlightIntegrator.step(rotated_state, 0.01, thrust_model) or rotated_state.acceleration_m_s2.x >= 0.0:
 		push_error("Body-frame thrust direction did not follow quaternion attitude")
 		return 1
 	var invalid_controller := ReeveSimulationController.new()

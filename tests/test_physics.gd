@@ -873,4 +873,20 @@ func _check_integrated_aerodynamic_moment() -> int:
 	if invalid_controller.configure(invalid_state, invalid_model):
 		push_error("Controller accepted a non-monotonic aerodynamic drag curve")
 		return 1
+	var cp_without_inertia := ReeveSimulationController.new()
+	var cp_model := {
+		"dry_mass_kg": 1.0,
+		"aerodynamic_model": {
+			"reference_area_m2": 0.1,
+			"characteristic_length_m": 1.0,
+			"drag_curve": [
+				{"mach": 0.0, "cd": 0.5},
+				{"mach": 2.0, "cd": 0.4}
+			],
+			"center_of_pressure_offset_body_m": Vector3(0.0, 0.0, 1.0)
+		}
+	}
+	if cp_without_inertia.configure(invalid_state, cp_model):
+		push_error("Controller accepted an aerodynamic CP offset without rotational inertia")
+		return 1
 	return 0

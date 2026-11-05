@@ -243,7 +243,9 @@ func _check_attitude_coupled_aerodynamics() -> int:
 		push_error("Controller accepted an aerodynamic model without a supplied coefficient curve")
 		return 1
 	var invalid_offset_model: Dictionary = model.duplicate(true)
-	invalid_offset_model.aerodynamic_model.center_of_pressure_offset_body_m = Vector3(NAN, 0.0, 0.0)
+	var invalid_aerodynamic_model: Dictionary = model.aerodynamic_model.duplicate(true)
+	invalid_aerodynamic_model.center_of_pressure_offset_body_m = Vector3(NAN, 0.0, 0.0)
+	invalid_offset_model.aerodynamic_model = invalid_aerodynamic_model
 	if ReeveSimulationController.new().configure(state, invalid_offset_model):
 		push_error("Controller accepted a non-finite aerodynamic centre-of-pressure offset")
 		return 1

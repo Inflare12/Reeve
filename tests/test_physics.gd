@@ -51,7 +51,7 @@ func _check_mass_accounting() -> int:
 	state.mass_kg = 10.0
 	state.propellant_remaining_kg = 2.0
 	var model := {
-		"thrust_n": 0.0,
+		"thrust_n": 10.0,
 		"mass_flow_kg_s": 0.5,
 		"dry_mass_kg": 8.0,
 		"drag_coefficient": 0.0,

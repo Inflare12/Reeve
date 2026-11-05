@@ -157,6 +157,7 @@ func _reset_demonstration() -> void:
 	camera.look_at(Vector3(0.0, 2.0, 0.0), Vector3.UP)
 	status_label.text = "READY — no propulsion profile loaded. No flight has been simulated."
 	scope_label.text = "3-DOF point-mass physics foundation"
+	_update_telemetry_plots()
 
 func _update_flight_display() -> void:
 	if simulation.state == null:
@@ -164,8 +165,12 @@ func _update_flight_display() -> void:
 	var state := simulation.state
 	var atmosphere := ReeveAtmosphere.sample(state.position_m.y)
 	var speed: float = state.velocity_m_s.length()
-	var relative_air_speed: float = (state.velocity_m_s - simulation.wind_velocity_m_s).length()
-	var dynamic_pressure: float = 0.5 * float(atmosphere.density_kg_m3) * relative_air_speed * relative_air_speed
+	var dynamic_pressure: float = 0.0
+	if not simulation.telemetry.samples.is_empty():
+		dynamic_pressure = float(simulation.telemetry.samples[simulation.telemetry.samples.size() - 1].dynamic_pressure_pa)
+	else:
+		var relative_air_speed: float = (state.velocity_m_s - simulation.wind_velocity_m_s).length()
+		dynamic_pressure = 0.5 * float(atmosphere.density_kg_m3) * relative_air_speed * relative_air_speed
 	$RocketVisual.position = state.position_m
 	camera.position = state.position_m + Vector3(10.0, 6.0, 13.0)
 	camera.look_at(state.position_m + Vector3.UP * 2.0, Vector3.UP)

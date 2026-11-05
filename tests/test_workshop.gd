@@ -26,6 +26,16 @@ func _initialize() -> void:
 	if component_lists.size() != 1:
 		push_error("Workshop component hierarchy list is missing")
 		failures += 1
+	else:
+		var component_list := component_lists[0] as ItemList
+		if str(component_list.get_item_metadata(0)) != "main_fuselage":
+			push_error("Workshop component hierarchy metadata is missing")
+			failures += 1
+		instance.call("_on_component_selected", 0)
+		var selection_label: Label = instance.get("selected_component_label")
+		if selection_label == null or not selection_label.text.contains("Main fuselage shell"):
+			push_error("Workshop component inspection did not show selected component details")
+			failures += 1
 	var visuals := ["FuelTankVisual", "OxidizerTankVisual", "EngineVisual", "NozzleVisual", "PayloadVisual", "AvionicsVisual", "RecoveryVisual", "ExternalSensorVisual", "StructuralSupportVisual"]
 	for visual_name in visuals:
 		if instance.get_node_or_null("RocketVisual/" + visual_name) == null:

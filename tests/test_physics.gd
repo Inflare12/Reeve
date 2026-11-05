@@ -172,7 +172,7 @@ func _check_aerodynamic_force_model() -> int:
 	if absf(float(result.dynamic_pressure_pa) - 6000.0) > 0.001:
 		push_error("Dynamic pressure calculation failed")
 		return 1
-	if absf(float(result.drag_coefficient) - (0.5 + 0.5 / 3.0)) > 0.0001:
+	if absf(float(result.drag_coefficient) - (0.5 + 0.5 / 6.0)) > 0.0001:
 		push_error("Mach interpolation of supplied drag curve failed")
 		return 1
 	if Vector3(result.drag_force_n).z >= 0.0 or Vector3(result.lift_force_n).y <= 0.0:

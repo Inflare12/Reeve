@@ -20,7 +20,7 @@ Implemented foundations:
 - A documented approximate lower-atmosphere model (troposphere and lower stratosphere), including Sutherland-law dynamic viscosity.
 - A coefficient-driven aerodynamic module calculating Mach, dynamic pressure, Reynolds number, drag and supplied-slope lift without inventing vehicle coefficients.
 - Validated external propulsion-curve reader with linear interpolation, impulse integration and explicit source-quality labels; the simulation controller can apply the supplied thrust and mass-flow samples to the flight model.
-- A deterministic point-mass translational flight model with gravity, supplied thrust, and quadratic drag.
+- A deterministic translational flight model with gravity, supplied thrust, quadratic drag, quaternion attitude, diagonal-inertia angular dynamics and body-frame thrust direction.
 - A fixed-step simulation controller with a bounded catch-up accumulator, validated model inputs and optional ground-contact event.
 - An educational recovery model with altitude-triggered supplied parachute drag, terminal descent speed estimate and explicit limitations.
 - Live gravity-only drop demonstration with position, speed, acceleration, wind-relative dynamic pressure, mass and time telemetry.
@@ -28,7 +28,7 @@ Implemented foundations:
 - Telemetry samples with CSV and unit-labelled JSON export; Mach and dynamic pressure are computed from air-relative velocity including the configured wind vector. JSON exports also include state-triggered mission events such as apogee, descent and ground contact.
 - Basic analytical checks and model documentation.
 
-Not yet implemented: full 6-DOF rigid-body dynamics, aerodynamic stability derivatives, validated thermal/structural analysis, vehicle workshop, recovery, advanced weather, or a professional telemetry UI. These must not be inferred from the current scaffold.
+Not yet implemented: full coupled 6-DOF aerodynamics and stability derivatives, validated thermal/structural analysis, full component hierarchy and workshop-to-flight handoff, advanced weather, or a professional telemetry plotting UI. These must not be inferred from the current scaffold.
 
 ## Requirements
 

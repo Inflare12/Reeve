@@ -63,10 +63,14 @@ func _build_interface() -> void:
 	add_child(layer)
 	var panel := PanelContainer.new()
 	panel.position = Vector2(18.0, 18.0)
-	panel.custom_minimum_size = Vector2(350.0, 0.0)
+	panel.custom_minimum_size = Vector2(390.0, 680.0)
 	layer.add_child(panel)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(370.0, 650.0)
+	panel.add_child(scroll)
 	var column := VBoxContainer.new()
-	panel.add_child(column)
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(column)
 
 	var heading := Label.new()
 	heading.text = "REEVE  /  ROCKET WORKSHOP"

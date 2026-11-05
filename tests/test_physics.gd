@@ -530,7 +530,9 @@ func _check_time_varying_wind() -> int:
 	if not controller.configure(state, model):
 		push_error("Controller rejected valid wind model")
 		return 1
-	controller.advance_frame(controller.fixed_dt_s)
+	if not controller.step_once():
+		push_error("Controller wind step failed: %s" % controller.last_error)
+		return 1
 	if controller.telemetry.samples.is_empty() or float(controller.telemetry.samples[0].relative_air_speed_m_s) > 0.000001:
 		push_error("Controller did not pass sampled wind to physics telemetry")
 		return 1

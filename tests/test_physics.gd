@@ -25,6 +25,7 @@ func _initialize() -> void:
 	failures += _check_quaternion_rigid_body_dynamics()
 	failures += _check_time_varying_wind()
 	failures += _check_structural_axial_estimate()
+	failures += _check_thermal_lumped_response()
 	if failures == 0:
 		print("REEVE physics checks: PASS")
 	else:
@@ -563,5 +564,25 @@ func _check_structural_axial_estimate() -> int:
 	var invalid := ReeveStructuralEstimate.calculate_axial_tension("aluminium_6061_t6", 0.0, 1.0, 100.0)
 	if bool(invalid.get("ok", true)):
 		push_error("Structural estimate accepted zero cross-sectional area")
+		return 1
+	return 0
+
+func _check_thermal_lumped_response() -> int:
+	var result := ReeveThermalEstimate.calculate_lumped_convective_response(
+		"aluminium_6061_t6", 1.0, 0.1, 0.01, 10.0, 300.0, 400.0, 100.0
+	)
+	if not bool(result.get("ok", false)):
+		push_error("Valid lumped thermal response was rejected")
+		return 1
+	var expected_tau: float = 1.0 * 896.0 / (10.0 * 0.1)
+	var expected_temperature: float = 300.0 + 100.0 * exp(-100.0 / expected_tau)
+	if absf(float(result.time_constant_s) - expected_tau) > 0.000001 or absf(float(result.temperature_k) - expected_temperature) > 0.000001:
+		push_error("Lumped thermal response calculation is incorrect")
+		return 1
+	var invalid_biot := ReeveThermalEstimate.calculate_lumped_convective_response(
+		"fibreglass_generic", 1.0, 0.1, 0.1, 100.0, 300.0, 400.0, 10.0
+	)
+	if bool(invalid_biot.get("ok", true)) or float(invalid_biot.get("biot_number", 0.0)) < 0.1:
+		push_error("Thermal model failed to reject unsupported lumped-capacitance assumption")
 		return 1
 	return 0
